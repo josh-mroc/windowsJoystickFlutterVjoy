@@ -119,6 +119,28 @@ class DualStickApp:
             ),
         ]
 
+    def x_slider_rect(self) -> pygame.Rect:
+        """Return the X-axis slider to the right of the mode switch."""
+        first, mode = self.switch_rects()
+        width = max(24, first.width // 2)
+        # Leave the mode labels unobstructed between the switch and the slider.
+        left = mode.right + max(100, first.width * 2)
+        return pygame.Rect(left, first.top, width, first.height * 2)
+
+    def set_x_slider_at(self, position: tuple[float, float]) -> bool:
+        """Set the unidirectional X axis when the slider is touched."""
+        rect = self.x_slider_rect()
+        target = rect.inflate(24, 12)
+        if not target.collidepoint(position):
+            return False
+        self.move_x_slider(position)
+        return True
+
+    def move_x_slider(self, position: tuple[float, float]) -> None:
+        """Update a claimed slider, clamping drags beyond either endpoint."""
+        rect = self.x_slider_rect()
+        self.state.x = max(0.0, min(1.0, (rect.bottom - position[1]) / rect.height))
+
     def two_paddle_checkbox_rect(self) -> pygame.Rect:
         """Return the upper-left touch target for the orientation checkbox."""
         label_width, _ = self.small_font.size("Two Paddle input")
@@ -296,6 +318,22 @@ class DualStickApp:
                     label = self.small_font.render(text, True, color)
                     self.screen.blit(label, label.get_rect(midleft=(label_x, y)))
 
+    def draw_x_slider(self) -> None:
+        """Draw X with zero at the bottom and full-right at the top."""
+        rect = self.x_slider_rect()
+        pygame.draw.rect(self.screen, RING, rect, border_radius=rect.width // 2)
+        inner = rect.inflate(-6, -6)
+        pygame.draw.rect(self.screen, ACCENT, inner, border_radius=inner.width // 2)
+        knob_radius = max(6, (inner.width - 4) // 2)
+        knob_y = round(inner.bottom - knob_radius - self.state.x * (
+            inner.height - knob_radius * 2
+        ))
+        pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
+        label = self.small_font.render("X", True, TEXT)
+        value = self.small_font.render(f"{self.state.x:.2f}", True, MUTED)
+        self.screen.blit(label, label.get_rect(center=(rect.centerx, rect.top - 13)))
+        self.screen.blit(value, value.get_rect(center=(rect.centerx, rect.bottom + 15)))
+
     def draw_two_paddle_checkbox(self) -> None:
         rect = self.two_paddle_checkbox_rect()
         box = pygame.Rect(rect.left, rect.centery - 12, 24, 24)
@@ -331,6 +369,7 @@ class DualStickApp:
         )
         self.screen.blit(hint, hint.get_rect(center=(width / 2, 105)))
         self.draw_switches()
+        self.draw_x_slider()
         self.draw_two_paddle_checkbox()
         left, right, half_width, half_height = self.geometry()
         self.draw_stick("Y", left, half_width, half_height, self.state.left_y)
@@ -356,16 +395,21 @@ class DualStickApp:
                     control_touched = self.toggle_two_paddle_at(position)
                     if not control_touched:
                         control_touched = self.toggle_switch_at(position)
+                    if not control_touched and self.set_x_slider_at(position):
+                        self.contacts[("finger", event.finger_id)] = "x"
+                        control_touched = True
                     if not control_touched:
                         self.claim(("finger", event.finger_id), position)
                 elif event.type == pygame.FINGERMOTION:
-                    self.move(
-                        ("finger", event.finger_id),
-                        (
-                            event.x * self.screen.get_width(),
-                            event.y * self.screen.get_height(),
-                        ),
+                    contact = ("finger", event.finger_id)
+                    position = (
+                        event.x * self.screen.get_width(),
+                        event.y * self.screen.get_height(),
                     )
+                    if self.contacts.get(contact) == "x":
+                        self.move_x_slider(position)
+                    else:
+                        self.move(contact, position)
                 elif event.type == pygame.FINGERUP:
                     self.release(("finger", event.finger_id))
                 elif (
@@ -376,10 +420,16 @@ class DualStickApp:
                     control_clicked = self.toggle_two_paddle_at(event.pos)
                     if not control_clicked:
                         control_clicked = self.toggle_switch_at(event.pos)
+                    if not control_clicked and self.set_x_slider_at(event.pos):
+                        self.contacts["mouse"] = "x"
+                        control_clicked = True
                     if not control_clicked:
                         self.claim("mouse", event.pos)
                 elif event.type == pygame.MOUSEMOTION and "mouse" in self.contacts:
-                    self.move("mouse", event.pos)
+                    if self.contacts["mouse"] == "x":
+                        self.move_x_slider(event.pos)
+                    else:
+                        self.move("mouse", event.pos)
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                     self.release("mouse")
             self.keyboard()

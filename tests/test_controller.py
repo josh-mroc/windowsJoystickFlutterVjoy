@@ -62,7 +62,7 @@ class ControllerTests(unittest.TestCase):
         first.buttons[0] = True
         self.assertEqual(second.buttons, [False, False, False, False, False])
 
-    def test_vjoy_output_updates_y_and_ry_axes_and_all_five_buttons(self):
+    def test_vjoy_output_updates_x_y_and_ry_axes_and_all_five_buttons(self):
         output = VJoyOutput.__new__(VJoyOutput)
         output._device = Mock()
         output._pyvjoy = SimpleNamespace(
@@ -70,12 +70,18 @@ class ControllerTests(unittest.TestCase):
         )
 
         output.update(
-            PadState(left_y=-1, right_y=1, buttons=[True, False, True, False, True])
+            PadState(
+                x=1,
+                left_y=-1,
+                right_y=1,
+                buttons=[True, False, True, False, True],
+            )
         )
 
         self.assertEqual(
             output._device.set_axis.call_args_list,
             [
+                unittest.mock.call(1, VJOY_MAX),
                 unittest.mock.call(2, VJOY_MIN),
                 unittest.mock.call(4, VJOY_MAX),
             ],
