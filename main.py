@@ -1,0 +1,5 @@
+from vjoy_pad.app import main
+
+
+if __name__ == "__main__":
+    main()
