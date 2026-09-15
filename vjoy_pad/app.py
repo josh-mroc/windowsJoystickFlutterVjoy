@@ -32,6 +32,7 @@ class DualStickApp:
         self.font = pygame.font.SysFont("Segoe UI", 24)
         self.small_font = pygame.font.SysFont("Segoe UI", 17)
         self.state = PadState()
+        self.two_paddle_input = False
         # The first switch is a two-position selector: down selects button 2.
         self.state.buttons[1] = True
         # Button 2 starts selected, so the three-position selector starts at 5.
@@ -81,7 +82,11 @@ class DualStickApp:
 
     def geometry(self):
         width, height = self.screen.get_size()
-        return stick_geometry(width, height)
+        left, right, half_width, half_height = stick_geometry(width, height)
+        if not self.two_paddle_input:
+            # Preserve the right edge margin after swapping the RY dimensions.
+            right = (right[0] - (half_height - half_width), right[1])
+        return left, right, half_width, half_height
 
     def switch_rects(self) -> list[pygame.Rect]:
         """Return the centered two- and three-position switch bounds."""
@@ -101,6 +106,24 @@ class DualStickApp:
                 switch_height * 4 // 3,
             ),
         ]
+
+    def two_paddle_checkbox_rect(self) -> pygame.Rect:
+        """Return the touch target for the right-stick orientation checkbox."""
+        width, _ = self.screen.get_size()
+        label_width, _ = self.small_font.size("Two Paddle input")
+        control_width = 24 + 8 + label_width
+        return pygame.Rect(width - control_width - 24, 28, control_width, 28)
+
+    def toggle_two_paddle_at(self, position: tuple[float, float]) -> bool:
+        """Toggle the right stick orientation when its checkbox is touched."""
+        if not self.two_paddle_checkbox_rect().collidepoint(position):
+            return False
+        self.two_paddle_input = not self.two_paddle_input
+        self.state.right_y = 0.0
+        for contact, side in list(self.contacts.items()):
+            if side == "right":
+                del self.contacts[contact]
+        return True
 
     def toggle_switch_at(self, position: tuple[float, float]) -> bool:
         """Select the position touched on either switch."""
@@ -127,6 +150,7 @@ class DualStickApp:
 
     def claim(self, contact: Hashable, position: tuple[float, float]) -> None:
         left, right, half_width, half_height = self.geometry()
+        right_half_width, right_half_height = self.right_stick_half_sizes()
         distances = {
             "left": (
                 ((position[0] - left[0]) / half_width) ** 2
@@ -134,8 +158,8 @@ class DualStickApp:
             )
             ** 0.5,
             "right": (
-                ((position[0] - right[0]) / half_width) ** 2
-                + ((position[1] - right[1]) / half_height) ** 2
+                ((position[0] - right[0]) / right_half_width) ** 2
+                + ((position[1] - right[1]) / right_half_height) ** 2
             )
             ** 0.5,
         }
@@ -149,11 +173,23 @@ class DualStickApp:
         if not side:
             return
         left, right, _, half_height = self.geometry()
-        y = stick_from_pointer(position, left if side == "left" else right, half_height)
         if side == "left":
-            self.state.left_y = y
+            self.state.left_y = stick_from_pointer(position, left, half_height)
         else:
-            self.state.right_y = y
+            if self.two_paddle_input:
+                self.state.right_y = stick_from_pointer(position, right, half_height)
+            else:
+                # The visual control is rotated left; it still drives vJoy RY.
+                self.state.right_y = stick_from_pointer(
+                    (position[1], position[0]), (right[1], right[0]), half_height
+                )
+
+    def right_stick_half_sizes(self) -> tuple[float, float]:
+        """Return RY's half-sizes for its selected orientation."""
+        _, _, half_width, half_height = self.geometry()
+        if self.two_paddle_input:
+            return half_width, half_height
+        return half_height, half_width
 
     def release(self, contact: Hashable) -> None:
         side = self.contacts.pop(contact, None)
@@ -167,7 +203,14 @@ class DualStickApp:
         if "left" not in self.contacts.values():
             self.state.left_y = float(keys[pygame.K_s]) - float(keys[pygame.K_w])
         if "right" not in self.contacts.values():
-            self.state.right_y = float(keys[pygame.K_DOWN]) - float(keys[pygame.K_UP])
+            if self.two_paddle_input:
+                self.state.right_y = float(keys[pygame.K_DOWN]) - float(
+                    keys[pygame.K_UP]
+                )
+            else:
+                self.state.right_y = float(keys[pygame.K_RIGHT]) - float(
+                    keys[pygame.K_LEFT]
+                )
 
     def draw_stick(
         self, name: str, center, half_width: float, half_height: float, y: float
@@ -177,8 +220,15 @@ class DualStickApp:
         pygame.draw.ellipse(self.screen, RING, outer, width=4)
         inner = outer.inflate(-half_width * 0.65, -half_height * 0.65)
         pygame.draw.ellipse(self.screen, RING, inner, width=2)
-        knob = (center[0], center[1] + y * half_height)
-        pygame.draw.circle(self.screen, ACCENT, knob, half_width * 0.42)
+        horizontal = half_width > half_height
+        knob = (
+            (center[0] + y * half_width, center[1])
+            if horizontal
+            else (center[0], center[1] + y * half_height)
+        )
+        pygame.draw.circle(
+            self.screen, ACCENT, knob, min(half_width, half_height) * 0.42
+        )
         label = self.font.render(name, True, TEXT)
         self.screen.blit(
             label, label.get_rect(center=(center[0], center[1] - half_height - 48))
@@ -232,6 +282,25 @@ class DualStickApp:
                     label = self.small_font.render(text, True, TEXT)
                     self.screen.blit(label, label.get_rect(center=(label_x, y)))
 
+    def draw_two_paddle_checkbox(self) -> None:
+        rect = self.two_paddle_checkbox_rect()
+        box = pygame.Rect(rect.left, rect.centery - 12, 24, 24)
+        pygame.draw.rect(self.screen, RING, box, width=2, border_radius=3)
+        if self.two_paddle_input:
+            pygame.draw.lines(
+                self.screen,
+                ACCENT,
+                False,
+                (
+                    (box.left + 5, box.centery),
+                    (box.left + 10, box.bottom - 6),
+                    (box.right - 4, box.top + 5),
+                ),
+                width=3,
+            )
+        label = self.small_font.render("Two Paddle input", True, TEXT)
+        self.screen.blit(label, label.get_rect(midleft=(box.right + 8, rect.centery)))
+
     def draw(self) -> None:
         self.screen.fill(BG)
         width, _ = self.screen.get_size()
@@ -248,9 +317,13 @@ class DualStickApp:
         )
         self.screen.blit(hint, hint.get_rect(center=(width / 2, 105)))
         self.draw_switches()
+        self.draw_two_paddle_checkbox()
         left, right, half_width, half_height = self.geometry()
         self.draw_stick("Y", left, half_width, half_height, self.state.left_y)
-        self.draw_stick("RY", right, half_width, half_height, self.state.right_y)
+        right_half_width, right_half_height = self.right_stick_half_sizes()
+        self.draw_stick(
+            "RY", right, right_half_width, right_half_height, self.state.right_y
+        )
         pygame.display.flip()
 
     def run(self) -> None:
@@ -266,7 +339,10 @@ class DualStickApp:
                         event.x * self.screen.get_width(),
                         event.y * self.screen.get_height(),
                     )
-                    if not self.toggle_switch_at(position):
+                    control_touched = self.toggle_two_paddle_at(position)
+                    if not control_touched:
+                        control_touched = self.toggle_switch_at(position)
+                    if not control_touched:
                         self.claim(("finger", event.finger_id), position)
                 elif event.type == pygame.FINGERMOTION:
                     self.move(
@@ -283,7 +359,10 @@ class DualStickApp:
                     and event.button == 1
                     and not getattr(event, "touch", False)
                 ):
-                    if not self.toggle_switch_at(event.pos):
+                    control_clicked = self.toggle_two_paddle_at(event.pos)
+                    if not control_clicked:
+                        control_clicked = self.toggle_switch_at(event.pos)
+                    if not control_clicked:
                         self.claim("mouse", event.pos)
                 elif event.type == pygame.MOUSEMOTION and "mouse" in self.contacts:
                     self.move("mouse", event.pos)
