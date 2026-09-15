@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+from ctypes import wintypes
+import sys
 from typing import Hashable
 
 import pygame
 
-from .controller import PadState, VJoyOutput, stick_from_pointer
+from .controller import PadState, VJoyOutput, stick_from_pointer, stick_geometry
 
 BG = (13, 18, 28)
-PANEL = (27, 36, 52)
 RING = (64, 79, 103)
 ACCENT = (66, 211, 173)
 TEXT = (235, 241, 248)
@@ -21,9 +23,11 @@ class DualStickApp:
     def __init__(self, device_id: int = 1, windowed: bool = False) -> None:
         pygame.init()
         pygame.display.set_caption("vJoy Touchpad")
-        flags = pygame.RESIZABLE if windowed else pygame.FULLSCREEN
-        size = (1100, 650) if windowed else (0, 0)
+        flags = pygame.RESIZABLE if windowed else pygame.NOFRAME
+        display = pygame.display.Info()
+        size = (1100, 650) if windowed else (display.current_w, display.current_h)
         self.screen = pygame.display.set_mode(size, flags)
+        self._enable_transparent_overlay()
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("Segoe UI", 24)
         self.small_font = pygame.font.SysFont("Segoe UI", 17)
@@ -37,11 +41,43 @@ class DualStickApp:
         except Exception as exc:
             self.status = f"Preview mode — vJoy unavailable: {exc}"
 
+    def _enable_transparent_overlay(self) -> None:
+        """Make the color-keyed window transparent and topmost on Windows."""
+        if sys.platform != "win32":
+            return
+
+        hwnd = pygame.display.get_wm_info()["window"]
+        user32 = ctypes.windll.user32
+        get_window_long = user32.GetWindowLongW
+        set_window_long = user32.SetWindowLongW
+        get_window_long.argtypes = [wintypes.HWND, ctypes.c_int]
+        get_window_long.restype = ctypes.c_long
+        set_window_long.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_long]
+        set_window_long.restype = ctypes.c_long
+        extended_style = get_window_long(hwnd, -20)  # GWL_EXSTYLE
+        set_window_long(hwnd, -20, extended_style | 0x00080000)  # WS_EX_LAYERED
+        color_key = BG[0] | (BG[1] << 8) | (BG[2] << 16)
+        user32.SetLayeredWindowAttributes.argtypes = [
+            wintypes.HWND,
+            wintypes.COLORREF,
+            wintypes.BYTE,
+            wintypes.DWORD,
+        ]
+        user32.SetLayeredWindowAttributes(hwnd, color_key, 0, 0x00000001)
+        user32.SetWindowPos.argtypes = [
+            wintypes.HWND,
+            wintypes.HWND,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_int,
+            wintypes.UINT,
+        ]
+        user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010)
+
     def geometry(self):
         width, height = self.screen.get_size()
-        radius = max(70, min(width * 0.17, height * 0.29))
-        y = height * 0.57
-        return (width * 0.27, y), (width * 0.73, y), radius
+        return stick_geometry(width, height)
 
     def claim(self, contact: Hashable, position: tuple[float, float]) -> None:
         left, right, radius = self.geometry()
@@ -82,7 +118,6 @@ class DualStickApp:
             self.state.right_y = float(keys[pygame.K_DOWN]) - float(keys[pygame.K_UP])
 
     def draw_stick(self, name: str, center, radius: float, x: float, y: float) -> None:
-        pygame.draw.circle(self.screen, PANEL, center, radius)
         pygame.draw.circle(self.screen, RING, center, radius, width=4)
         pygame.draw.circle(self.screen, RING, center, radius * 0.56, width=2)
         knob = (center[0] + x * radius, center[1] + y * radius)

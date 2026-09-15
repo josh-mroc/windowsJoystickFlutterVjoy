@@ -33,7 +33,9 @@ the required dependencies installed.
    separate `pygame` package. Always install and run with the same Python
    interpreter.
 
-The app opens full-screen. Use two fingers to move both sticks at once. Press
+The app opens as a transparent, always-on-top overlay, with each joystick sized
+to one third of the screen width (and capped to fit the screen height). Use two
+fingers to move both sticks at once. Press
 **Esc** to exit. For desktop testing, drag a stick with the mouse; **WASD** moves
 the left stick and the arrow keys move the right stick.
 
