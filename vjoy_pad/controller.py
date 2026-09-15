@@ -55,9 +55,7 @@ def to_vjoy_axis(value: float) -> int:
 
 @dataclass
 class PadState:
-    # X is an ordinary vJoy axis.  Its bottom/far-left position must therefore
-    # be represented by -1, not 0 (which means the centered 1500 position).
-    x: float = -1.0
+    x: float = 0.0
     left_y: float = 0.0
     right_y: float = 0.0
     buttons: list[bool] = field(default_factory=lambda: [False] * 5)

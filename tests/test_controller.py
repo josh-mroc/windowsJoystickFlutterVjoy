@@ -102,7 +102,7 @@ class ControllerTests(unittest.TestCase):
         output.update(PadState())
         self.assertEqual(
             output._device.set_axis.call_args_list[0],
-            unittest.mock.call(1, VJOY_MIN),
+            unittest.mock.call(1, VJOY_CENTER),
         )
 
 

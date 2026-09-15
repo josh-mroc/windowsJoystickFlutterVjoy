@@ -26,7 +26,7 @@ class AppTests(unittest.TestCase):
             app = DualStickApp(windowed=True)
 
         output.update.assert_called_once_with(app.state)
-        self.assertEqual(app.state.x, -1)
+        self.assertEqual(app.state.x, 0)
 
     def test_switch_labels_describe_each_button_with_the_requested_color(self):
         self.assertEqual(
@@ -72,11 +72,11 @@ class AppTests(unittest.TestCase):
         self.assertGreater(slider.left, mode.right)
         self.assertEqual(slider.height, first.height * 2)
 
-    def test_x_slider_defaults_to_negative_one_and_maps_bottom_to_top(self):
+    def test_x_slider_defaults_to_zero_and_is_limited_until_button_one_is_active(self):
         slider = self.app.x_slider_rect()
         top, bottom, _ = self.app.x_slider_track()
-        self.assertEqual(self.app.state.x, -1)
-        self.assertEqual(self.app.x_slider_fraction(), 0)
+        self.assertEqual(self.app.state.x, 0)
+        self.assertEqual(self.app.x_slider_fraction(), 0.5)
 
         self.assertTrue(self.app.set_x_slider_at((slider.centerx, bottom)))
         self.assertEqual(self.app.state.x, -1)
@@ -84,6 +84,11 @@ class AppTests(unittest.TestCase):
         self.assertTrue(self.app.set_x_slider_at(slider.center))
         self.assertEqual(self.app.state.x, 0)
         self.assertEqual(self.app.x_slider_fraction(), 0.5)
+        self.assertTrue(self.app.set_x_slider_at((slider.centerx, top)))
+        self.assertEqual(self.app.state.x, 0)
+        self.assertEqual(self.app.x_slider_fraction(), 0.5)
+
+        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
         self.assertTrue(self.app.set_x_slider_at((slider.centerx, top)))
         self.assertEqual(self.app.state.x, 1)
         self.assertEqual(self.app.x_slider_fraction(), 1)
@@ -93,8 +98,19 @@ class AppTests(unittest.TestCase):
 
         self.app.move_x_slider(slider.midbottom)
         self.assertEqual(self.app.state.x, -1)
+        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
         self.app.move_x_slider(slider.midtop)
         self.assertEqual(self.app.state.x, 1)
+
+    def test_disarming_clamps_positive_x_to_zero(self):
+        first_switch = self.app.switch_rects()[0]
+        self.app.toggle_switch_at(first_switch.center)
+        self.app.move_x_slider(self.app.x_slider_rect().midtop)
+        self.assertEqual(self.app.state.x, 1)
+
+        self.app.toggle_switch_at(first_switch.center)
+
+        self.assertEqual(self.app.state.x, 0)
 
     def test_x_slider_displays_normalized_axis_value(self):
         original_render = self.app.small_font.render
@@ -104,7 +120,7 @@ class AppTests(unittest.TestCase):
 
         self.app.draw_x_slider()
 
-        font.render.assert_any_call("-1.00", True, MUTED)
+        font.render.assert_any_call("0.00", True, MUTED)
 
     def test_second_switch_cannot_move_up_while_button_two_is_selected(self):
         switch = self.app.switch_rects()[1]
