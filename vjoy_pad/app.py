@@ -17,7 +17,6 @@ RING = (64, 79, 103)
 ACCENT = (66, 211, 173)
 TEXT = (235, 241, 248)
 MUTED = (148, 163, 184)
-SWITCH_OFF = (42, 52, 68)
 
 
 class DualStickApp:
@@ -35,6 +34,8 @@ class DualStickApp:
         self.state = PadState()
         # The first switch is a two-position selector: down selects button 2.
         self.state.buttons[1] = True
+        # Button 2 starts selected, so the three-position selector starts at 5.
+        self.state.buttons[4] = True
         self.contacts: dict[Hashable, str] = {}
         self.output = None
         self.status = "Preview mode"
@@ -83,32 +84,39 @@ class DualStickApp:
         return stick_geometry(width, height)
 
     def switch_rects(self) -> list[pygame.Rect]:
-        """Return three centered, touch-friendly vertical switch bounds."""
+        """Return the centered two- and three-position switch bounds."""
         width, height = self.screen.get_size()
         switch_width = max(42, min(58, width // 18))
         switch_height = max(76, min(96, height // 7))
         gap = max(16, switch_width // 2)
-        row_width = switch_width * 3 + gap * 2
+        row_width = switch_width * 2 + gap
         left = (width - row_width) // 2
         top = 140
         return [
             pygame.Rect(left + index * (switch_width + gap), top, switch_width, switch_height)
-            for index in range(3)
+            for index in range(2)
         ]
 
     def toggle_switch_at(self, position: tuple[float, float]) -> bool:
-        """Toggle the switch at position and report whether one was hit."""
+        """Select the position touched on either switch."""
         for index, rect in enumerate(self.switch_rects()):
             if rect.collidepoint(position):
                 if index == 0:
                     button_one = not self.state.buttons[0]
                     self.state.buttons[0] = button_one
                     self.state.buttons[1] = not button_one
+                    if not button_one:
+                        self._select_button(5)
                 else:
-                    button_index = index + 1
-                    self.state.buttons[button_index] = not self.state.buttons[button_index]
+                    third = min(2, int((position[1] - rect.top) * 3 / rect.height))
+                    self._select_button(3 + third)
                 return True
         return False
+
+    def _select_button(self, number: int) -> None:
+        """Select exactly one button on the three-position switch."""
+        for button_number in range(3, 6):
+            self.state.buttons[button_number - 1] = button_number == number
 
     def claim(self, contact: Hashable, position: tuple[float, float]) -> None:
         left, right, radius = self.geometry()
@@ -164,22 +172,23 @@ class DualStickApp:
 
     def draw_switches(self) -> None:
         for index, rect in enumerate(self.switch_rects()):
-            button_index = 0 if index == 0 else index + 1
-            enabled = self.state.buttons[button_index]
             pygame.draw.rect(self.screen, RING, rect, border_radius=rect.width // 2)
             inner = rect.inflate(-6, -6)
-            pygame.draw.rect(
-                self.screen,
-                ACCENT if enabled else SWITCH_OFF,
-                inner,
-                border_radius=inner.width // 2,
-            )
+            pygame.draw.rect(self.screen, ACCENT, inner, border_radius=inner.width // 2)
             knob_radius = (inner.width - 8) // 2
-            knob_y = (
-                inner.top + knob_radius + 4
-                if enabled
-                else inner.bottom - knob_radius - 4
-            )
+            if index == 0:
+                knob_y = (
+                    inner.top + knob_radius + 4
+                    if self.state.buttons[0]
+                    else inner.bottom - knob_radius - 4
+                )
+            else:
+                selected = next(i for i in range(3) if self.state.buttons[i + 2])
+                knob_y = (
+                    inner.top + knob_radius + 4,
+                    inner.centery,
+                    inner.bottom - knob_radius - 4,
+                )[selected]
             pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
             if index == 0:
                 top_label = self.small_font.render("1", True, TEXT)
@@ -193,10 +202,17 @@ class DualStickApp:
                     bottom_label.get_rect(center=(rect.centerx, rect.bottom + 15)),
                 )
             else:
-                label = self.small_font.render(str(index + 2), True, TEXT)
-                self.screen.blit(
-                    label, label.get_rect(center=(rect.centerx, rect.bottom + 15))
-                )
+                label_x = rect.right + 14
+                for text, y in zip(
+                    ("3", "4", "5"),
+                    (
+                        inner.top + knob_radius + 4,
+                        inner.centery,
+                        inner.bottom - knob_radius - 4,
+                    ),
+                ):
+                    label = self.small_font.render(text, True, TEXT)
+                    self.screen.blit(label, label.get_rect(center=(label_x, y)))
 
     def draw(self) -> None:
         self.screen.fill(BG)
@@ -206,7 +222,7 @@ class DualStickApp:
         status = self.small_font.render(self.status, True, ACCENT if self.output else MUTED)
         self.screen.blit(status, status.get_rect(center=(width / 2, 74)))
         hint = self.small_font.render(
-            "1 / 2 selects one button  •  Other switches: up = on  •  Esc exits",
+            "Switches select 1 / 2 and 3 / 4 / 5  •  Esc exits",
             True,
             MUTED,
         )

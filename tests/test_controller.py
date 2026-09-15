@@ -47,22 +47,22 @@ class ControllerTests(unittest.TestCase):
         self.assertAlmostEqual(math.hypot(x, y), 1)
         self.assertAlmostEqual(x, y)
 
-    def test_pad_state_starts_with_four_released_buttons(self):
+    def test_pad_state_starts_with_five_released_buttons(self):
         first = PadState()
         second = PadState()
 
-        self.assertEqual(first.buttons, [False, False, False, False])
+        self.assertEqual(first.buttons, [False, False, False, False, False])
         first.buttons[0] = True
-        self.assertEqual(second.buttons, [False, False, False, False])
+        self.assertEqual(second.buttons, [False, False, False, False, False])
 
-    def test_vjoy_output_updates_all_four_buttons(self):
+    def test_vjoy_output_updates_all_five_buttons(self):
         output = VJoyOutput.__new__(VJoyOutput)
         output._device = Mock()
         output._pyvjoy = SimpleNamespace(
             HID_USAGE_X=1, HID_USAGE_Y=2, HID_USAGE_RX=3, HID_USAGE_RY=4
         )
 
-        output.update(PadState(buttons=[True, False, True, False]))
+        output.update(PadState(buttons=[True, False, True, False, True]))
 
         self.assertEqual(
             output._device.set_button.call_args_list,
@@ -71,6 +71,7 @@ class ControllerTests(unittest.TestCase):
                 unittest.mock.call(2, False),
                 unittest.mock.call(3, True),
                 unittest.mock.call(4, False),
+                unittest.mock.call(5, True),
             ],
         )
 
