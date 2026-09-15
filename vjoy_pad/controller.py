@@ -53,6 +53,12 @@ def to_vjoy_axis(value: float) -> int:
     return round(VJOY_MIN + (value + 1.0) * (VJOY_MAX - VJOY_MIN) / 2)
 
 
+def to_vjoy_slider(value: float) -> int:
+    """Convert a unidirectional slider value to vJoy's full axis range."""
+    value = clamp(value, 0.0, 1.0)
+    return round(VJOY_MIN + value * (VJOY_MAX - VJOY_MIN))
+
+
 @dataclass
 class PadState:
     x: float = 0.0
@@ -72,7 +78,7 @@ class VJoyOutput:
 
     def update(self, state: PadState) -> None:
         axes = self._pyvjoy
-        self._device.set_axis(axes.HID_USAGE_X, to_vjoy_axis(state.x))
+        self._device.set_axis(axes.HID_USAGE_X, to_vjoy_slider(state.x))
         self._device.set_axis(axes.HID_USAGE_Y, to_vjoy_axis(state.left_y))
         self._device.set_axis(axes.HID_USAGE_RY, to_vjoy_axis(state.right_y))
         for number, pressed in enumerate(state.buttons, start=1):

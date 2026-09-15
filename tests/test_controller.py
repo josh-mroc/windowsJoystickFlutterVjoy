@@ -11,6 +11,7 @@ from vjoy_pad.controller import (
     stick_from_pointer,
     stick_geometry,
     to_vjoy_axis,
+    to_vjoy_slider,
 )
 
 
@@ -43,6 +44,11 @@ class ControllerTests(unittest.TestCase):
     def test_axis_clamps(self):
         self.assertEqual(to_vjoy_axis(-4), VJOY_MIN)
         self.assertEqual(to_vjoy_axis(4), VJOY_MAX)
+
+    def test_slider_zero_uses_axis_minimum_instead_of_center(self):
+        self.assertEqual(to_vjoy_slider(0), VJOY_MIN)
+        self.assertEqual(to_vjoy_slider(0.5), VJOY_CENTER)
+        self.assertEqual(to_vjoy_slider(1), VJOY_MAX)
 
     def test_pointer_deadzone(self):
         self.assertEqual(stick_from_pointer((100, 101), (100, 100), 100), 0)
@@ -96,6 +102,13 @@ class ControllerTests(unittest.TestCase):
                 unittest.mock.call(4, False),
                 unittest.mock.call(5, True),
             ],
+        )
+
+        output._device.reset_mock()
+        output.update(PadState(x=0))
+        self.assertEqual(
+            output._device.set_axis.call_args_list[0],
+            unittest.mock.call(1, VJOY_MIN),
         )
 
 
