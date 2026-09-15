@@ -17,6 +17,7 @@ RING = (64, 79, 103)
 ACCENT = (66, 211, 173)
 TEXT = (235, 241, 248)
 MUTED = (148, 163, 184)
+SWITCH_OFF = (42, 52, 68)
 
 
 class DualStickApp:
@@ -79,6 +80,28 @@ class DualStickApp:
         width, height = self.screen.get_size()
         return stick_geometry(width, height)
 
+    def switch_rects(self) -> list[pygame.Rect]:
+        """Return four centered, touch-friendly vertical switch bounds."""
+        width, height = self.screen.get_size()
+        switch_width = max(42, min(58, width // 18))
+        switch_height = max(76, min(96, height // 7))
+        gap = max(16, switch_width // 2)
+        row_width = switch_width * 4 + gap * 3
+        left = (width - row_width) // 2
+        top = 122
+        return [
+            pygame.Rect(left + index * (switch_width + gap), top, switch_width, switch_height)
+            for index in range(4)
+        ]
+
+    def toggle_switch_at(self, position: tuple[float, float]) -> bool:
+        """Toggle the switch at position and report whether one was hit."""
+        for index, rect in enumerate(self.switch_rects()):
+            if rect.collidepoint(position):
+                self.state.buttons[index] = not self.state.buttons[index]
+                return True
+        return False
+
     def claim(self, contact: Hashable, position: tuple[float, float]) -> None:
         left, right, radius = self.geometry()
         distances = {
@@ -131,6 +154,28 @@ class DualStickApp:
             values, values.get_rect(center=(center[0], center[1] - radius - 22))
         )
 
+    def draw_switches(self) -> None:
+        for index, (rect, enabled) in enumerate(
+            zip(self.switch_rects(), self.state.buttons), start=1
+        ):
+            pygame.draw.rect(self.screen, RING, rect, border_radius=rect.width // 2)
+            inner = rect.inflate(-6, -6)
+            pygame.draw.rect(
+                self.screen,
+                ACCENT if enabled else SWITCH_OFF,
+                inner,
+                border_radius=inner.width // 2,
+            )
+            knob_radius = (inner.width - 8) // 2
+            knob_y = (
+                inner.top + knob_radius + 4
+                if enabled
+                else inner.bottom - knob_radius - 4
+            )
+            pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
+            label = self.small_font.render(str(index), True, TEXT)
+            self.screen.blit(label, label.get_rect(center=(rect.centerx, rect.bottom + 15)))
+
     def draw(self) -> None:
         self.screen.fill(BG)
         width, _ = self.screen.get_size()
@@ -139,11 +184,12 @@ class DualStickApp:
         status = self.small_font.render(self.status, True, ACCENT if self.output else MUTED)
         self.screen.blit(status, status.get_rect(center=(width / 2, 74)))
         hint = self.small_font.render(
-            "Touch or drag both sticks  •  Esc exits  •  WASD + arrow keys also work",
+            "Switch up = on, down = off  •  Touch or drag both sticks  •  Esc exits",
             True,
             MUTED,
         )
         self.screen.blit(hint, hint.get_rect(center=(width / 2, 105)))
+        self.draw_switches()
         left, right, radius = self.geometry()
         self.draw_stick("LEFT  •  X / Y", left, radius, self.state.left_x, self.state.left_y)
         self.draw_stick("RIGHT  •  RX / RY", right, radius, self.state.right_x, self.state.right_y)
@@ -156,13 +202,16 @@ class DualStickApp:
                 if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                     running = False
                 elif event.type == pygame.FINGERDOWN:
-                    self.claim(("finger", event.finger_id), (event.x * self.screen.get_width(), event.y * self.screen.get_height()))
+                    position = (event.x * self.screen.get_width(), event.y * self.screen.get_height())
+                    if not self.toggle_switch_at(position):
+                        self.claim(("finger", event.finger_id), position)
                 elif event.type == pygame.FINGERMOTION:
                     self.move(("finger", event.finger_id), (event.x * self.screen.get_width(), event.y * self.screen.get_height()))
                 elif event.type == pygame.FINGERUP:
                     self.release(("finger", event.finger_id))
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not getattr(event, "touch", False):
-                    self.claim("mouse", event.pos)
+                    if not self.toggle_switch_at(event.pos):
+                        self.claim("mouse", event.pos)
                 elif event.type == pygame.MOUSEMOTION and "mouse" in self.contacts:
                     self.move("mouse", event.pos)
                 elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:

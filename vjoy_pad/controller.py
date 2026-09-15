@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 
 VJOY_MIN = 1
@@ -55,6 +55,7 @@ class PadState:
     left_y: float = 0.0
     right_x: float = 0.0
     right_y: float = 0.0
+    buttons: list[bool] = field(default_factory=lambda: [False] * 4)
 
 
 class VJoyOutput:
@@ -72,6 +73,8 @@ class VJoyOutput:
         self._device.set_axis(axes.HID_USAGE_Y, to_vjoy_axis(state.left_y))
         self._device.set_axis(axes.HID_USAGE_RX, to_vjoy_axis(state.right_x))
         self._device.set_axis(axes.HID_USAGE_RY, to_vjoy_axis(state.right_y))
+        for number, pressed in enumerate(state.buttons, start=1):
+            self._device.set_button(number, pressed)
 
     def reset(self) -> None:
         self.update(PadState())

@@ -4,6 +4,9 @@ A minimal, touch-friendly dual joystick for Windows 11. It sends the left stick 
 vJoy **X/Y** and the right stick to **RX/RY**. Multi-touch, mouse dragging, and
 keyboard fallback are supported.
 
+Four vertical toggle switches at the top control vJoy buttons **1–4**. Tap a
+switch to toggle it: up is on and down is off.
+
 ## Which file do I run?
 
 Run **`main.py`** from the repository's top-level folder. Do not run
