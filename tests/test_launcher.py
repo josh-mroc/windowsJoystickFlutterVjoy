@@ -13,6 +13,27 @@ class LauncherTests(unittest.TestCase):
         self.assertIn("pygame-ce", message)
         self.assertIn("requirements.txt", message)
 
+    def test_install_message_uses_uv_for_uv_managed_python(self):
+        executable = (
+            r"C:\Users\me\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\python.exe"
+        )
+
+        with patch.object(sys, "executable", executable):
+            message = launcher.pygame_install_message()
+
+        self.assertIn(f'uv pip install --python "{executable}"', message)
+        self.assertIn("uv venv .venv", message)
+        self.assertNotIn('" -m pip install', message)
+
+    def test_install_message_uses_pip_for_regular_python(self):
+        executable = r"C:\Python313\python.exe"
+
+        with patch.object(sys, "executable", executable):
+            message = launcher.pygame_install_message()
+
+        self.assertIn(f'"{executable}" -m pip install', message)
+        self.assertNotIn("uv pip install", message)
+
     @patch("vjoy_pad.launcher.importlib.import_module")
     def test_missing_pygame_exits_with_install_guidance(self, import_module):
         import_module.side_effect = ModuleNotFoundError(

@@ -62,3 +62,14 @@ python main.py
 In VS Code, run **Python: Select Interpreter** from the Command Palette and choose
 `.venv\Scripts\python.exe`. The Python path shown when launching `main.py` should
 then point into this repository's `.venv` folder.
+
+If the displayed interpreter path contains `uv\python`, it is a Python installation
+managed by uv and may not include pip. Create a project environment and install the
+dependencies through uv instead:
+
+```powershell
+uv venv .venv
+uv pip install --python .venv -r requirements.txt
+```
+
+Then select `.venv\Scripts\python.exe` in VS Code before running `main.py` again.
