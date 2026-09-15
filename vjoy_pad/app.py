@@ -54,9 +54,8 @@ class DualStickApp:
         self.status = "Preview mode"
         try:
             self.output = VJoyOutput(device_id)
-            # vJoy initializes its axes at center. Publish our initial state
-            # immediately so the unidirectional X slider appears at its
-            # minimum (far-left) position as soon as the device connects.
+            # Publish the selected button defaults and centered axes as soon as
+            # the device connects.
             self.output.update(self.state)
             self.status = f"Connected to vJoy device {device_id}"
         except Exception as exc:
@@ -149,10 +148,10 @@ class DualStickApp:
         # minimum) and its top endpoint is +1.  Measure against the knob's
         # actual travel rather than the outer rectangle: otherwise dragging to
         # the visible bottom stop could never produce the minimum axis value.
-        self.state.x = max(
-            -1.0,
-            min(1.0, (bottom - position[1]) * 2.0 / travel - 1.0),
-        )
+        value = (bottom - position[1]) * 2.0 / travel - 1.0
+        # Positive X is only available while switch 1 (ARMED) is active.
+        upper_bound = 1.0 if self.state.buttons[0] else 0.0
+        self.state.x = max(-1.0, min(upper_bound, value))
 
     def x_slider_fraction(self) -> float:
         """Return X as the zero-to-one value displayed by the UI."""
@@ -192,6 +191,7 @@ class DualStickApp:
                     self.state.buttons[0] = button_one
                     self.state.buttons[1] = not button_one
                     if not button_one:
+                        self.state.x = min(self.state.x, 0.0)
                         self._select_button(5)
                 else:
                     if self.state.buttons[1]:
