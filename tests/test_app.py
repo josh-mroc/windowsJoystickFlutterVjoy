@@ -71,6 +71,11 @@ class AppTests(unittest.TestCase):
         self.assertFalse(self.app.two_paddle_input)
         self.assertEqual(self.app.right_stick_half_sizes(), (half_height, half_width))
 
+    def test_two_paddle_checkbox_is_in_upper_left_corner(self):
+        checkbox = self.app.two_paddle_checkbox_rect()
+
+        self.assertEqual(checkbox.topleft, (24, 28))
+
     def test_two_paddle_checkbox_restores_vertical_ry_stick(self):
         checkbox = self.app.two_paddle_checkbox_rect()
 

@@ -108,11 +108,10 @@ class DualStickApp:
         ]
 
     def two_paddle_checkbox_rect(self) -> pygame.Rect:
-        """Return the touch target for the right-stick orientation checkbox."""
-        width, _ = self.screen.get_size()
+        """Return the upper-left touch target for the orientation checkbox."""
         label_width, _ = self.small_font.size("Two Paddle input")
         control_width = 24 + 8 + label_width
-        return pygame.Rect(width - control_width - 24, 28, control_width, 28)
+        return pygame.Rect(24, 28, control_width, 28)
 
     def toggle_two_paddle_at(self, position: tuple[float, float]) -> bool:
         """Toggle the right stick orientation when its checkbox is touched."""
