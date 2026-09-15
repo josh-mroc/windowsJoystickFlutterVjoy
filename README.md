@@ -16,9 +16,9 @@ selects **Auto** (button 3), **Manual** (button 4), or **HOLD** (button 5). It
 starts at HOLD, and selecting Disarmed also moves it to HOLD.
 
 The vertical **X** slider beside the mode switch is twice as long as the first
-switch. It starts at zero at the bottom; drag it upward to send progressively
-more right X-axis input, reaching full right at the top. Unlike the centered
-stick axes, slider zero sends the minimum X-axis value (900 rather than 1500 in
+switch. It starts at **-1** at the bottom; drag it upward through zero to send
+progressively more right X-axis input, reaching **+1** at the top. The bottom
+position sends the minimum X-axis value (900 rather than the centered 1500 in
 the target RC mapping). That initial minimum is sent as soon as vJoy connects,
 so X shows at the far-left position rather than briefly remaining centered.
 
