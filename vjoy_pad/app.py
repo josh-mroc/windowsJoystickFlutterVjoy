@@ -143,16 +143,28 @@ class DualStickApp:
 
     def move_x_slider(self, position: tuple[float, float]) -> None:
         """Update a claimed slider, clamping drags beyond either endpoint."""
-        rect = self.x_slider_rect()
-        fraction = max(0.0, min(1.0, (rect.bottom - position[1]) / rect.height))
-        # vJoy axes are centered: -1 is the minimum, 0 is the midpoint, and
-        # +1 is the maximum.  Keeping that convention in PadState prevents a
-        # visual slider value of zero from accidentally being sent as center.
-        self.state.x = fraction * 2.0 - 1.0
+        _, bottom, travel = self.x_slider_track()
+        # Use the same normalized -1..+1 convention as the Y joystick.  The
+        # slider is inverted visually, so its bottom endpoint is -1 (the vJoy
+        # minimum) and its top endpoint is +1.  Measure against the knob's
+        # actual travel rather than the outer rectangle: otherwise dragging to
+        # the visible bottom stop could never produce the minimum axis value.
+        self.state.x = max(
+            -1.0,
+            min(1.0, (bottom - position[1]) * 2.0 / travel - 1.0),
+        )
 
     def x_slider_fraction(self) -> float:
         """Return X as the zero-to-one value displayed by the UI."""
         return (self.state.x + 1.0) / 2.0
+
+    def x_slider_track(self) -> tuple[int, int, int]:
+        """Return the top, bottom, and length of the knob-center track."""
+        inner = self.x_slider_rect().inflate(-6, -6)
+        knob_radius = max(6, (inner.width - 4) // 2)
+        top = inner.top + knob_radius
+        bottom = inner.bottom - knob_radius
+        return top, bottom, bottom - top
 
     def two_paddle_checkbox_rect(self) -> pygame.Rect:
         """Return the upper-left touch target for the orientation checkbox."""
@@ -339,9 +351,8 @@ class DualStickApp:
         pygame.draw.rect(self.screen, ACCENT, inner, border_radius=inner.width // 2)
         knob_radius = max(6, (inner.width - 4) // 2)
         value = self.x_slider_fraction()
-        knob_y = round(
-            inner.bottom - knob_radius - value * (inner.height - knob_radius * 2)
-        )
+        _, bottom, travel = self.x_slider_track()
+        knob_y = round(bottom - value * travel)
         pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
         label = self.small_font.render("X", True, TEXT)
         value_label = self.small_font.render(f"{self.state.x:.2f}", True, MUTED)
