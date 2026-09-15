@@ -18,7 +18,7 @@ class AppTests(unittest.TestCase):
         pygame.quit()
 
     def test_button_two_is_selected_by_default(self):
-        self.assertEqual(self.app.state.buttons, [False, True, False, False])
+        self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
 
     def test_first_switch_selects_button_one_or_two(self):
         switch = self.app.switch_rects()[0]
@@ -27,18 +27,30 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.state.buttons[:2], [True, False])
         self.assertTrue(self.app.toggle_switch_at(switch.center))
         self.assertEqual(self.app.state.buttons[:2], [False, True])
+        self.assertEqual(self.app.state.buttons[2:], [False, False, True])
 
-    def test_other_switches_toggle_buttons_three_and_four(self):
-        for switch_index, button_index in ((1, 2), (2, 3)):
-            switch = self.app.switch_rects()[switch_index]
-            self.assertTrue(self.app.toggle_switch_at(switch.center))
-            self.assertTrue(self.app.state.buttons[button_index])
-            self.assertTrue(self.app.toggle_switch_at(switch.center))
-            self.assertFalse(self.app.state.buttons[button_index])
+    def test_second_switch_selects_buttons_three_four_and_five(self):
+        switch = self.app.switch_rects()[1]
+        positions = ((switch.top + 1, 2), (switch.centery, 3), (switch.bottom - 1, 4))
+        for position, button_index in positions:
+            self.assertTrue(self.app.toggle_switch_at((switch.centerx, position)))
+            self.assertEqual(
+                self.app.state.buttons[2:],
+                [i == button_index for i in range(2, 5)],
+            )
+
+    def test_selecting_button_two_moves_second_switch_to_five(self):
+        first, second = self.app.switch_rects()
+        self.app.toggle_switch_at(first.center)
+        self.app.toggle_switch_at((second.centerx, second.top + 1))
+
+        self.app.toggle_switch_at(first.center)
+
+        self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
 
     def test_position_outside_switches_is_not_consumed(self):
         self.assertFalse(self.app.toggle_switch_at((0, 0)))
-        self.assertEqual(self.app.state.buttons, [False, True, False, False])
+        self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
 
 
 if __name__ == "__main__":

@@ -4,10 +4,10 @@ A minimal, touch-friendly dual joystick for Windows 11. It sends the left stick 
 vJoy **X/Y** and the right stick to **RX/RY**. Multi-touch, mouse dragging, and
 keyboard fallback are supported.
 
-Three vertical toggle switches at the top control vJoy buttons **1–4**. The first
+Two vertical selector switches at the top control vJoy buttons **1–5**. The first
 switch selects between buttons **1** and **2**: up turns button 1 on, while down
-turns button 2 on. It starts down with button 2 on. The other switches toggle
-buttons **3** and **4**; up is on and down is off.
+turns button 2 on. The second selects button **3** at the top, **4** in the middle,
+or **5** at the bottom. It starts at 5, and selecting button 2 also moves it to 5.
 
 ## Which file do I run?
 

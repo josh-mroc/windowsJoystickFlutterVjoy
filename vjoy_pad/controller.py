@@ -55,7 +55,7 @@ class PadState:
     left_y: float = 0.0
     right_x: float = 0.0
     right_y: float = 0.0
-    buttons: list[bool] = field(default_factory=lambda: [False] * 4)
+    buttons: list[bool] = field(default_factory=lambda: [False] * 5)
 
 
 class VJoyOutput:
