@@ -93,8 +93,13 @@ class DualStickApp:
         left = (width - row_width) // 2
         top = 140
         return [
-            pygame.Rect(left + index * (switch_width + gap), top, switch_width, switch_height)
-            for index in range(2)
+            pygame.Rect(left, top, switch_width, switch_height),
+            pygame.Rect(
+                left + switch_width + gap,
+                top,
+                switch_width,
+                switch_height * 4 // 3,
+            ),
         ]
 
     def toggle_switch_at(self, position: tuple[float, float]) -> bool:
@@ -108,6 +113,8 @@ class DualStickApp:
                     if not button_one:
                         self._select_button(5)
                 else:
+                    if self.state.buttons[1]:
+                        return True
                     third = min(2, int((position[1] - rect.top) * 3 / rect.height))
                     self._select_button(3 + third)
                 return True
