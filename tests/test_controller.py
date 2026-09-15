@@ -1,10 +1,14 @@
 import math
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock
 
 from vjoy_pad.controller import (
+    PadState,
     VJOY_CENTER,
     VJOY_MAX,
     VJOY_MIN,
+    VJoyOutput,
     stick_from_pointer,
     stick_geometry,
     to_vjoy_axis,
@@ -42,6 +46,33 @@ class ControllerTests(unittest.TestCase):
         x, y = stick_from_pointer((200, 200), (100, 100), 100)
         self.assertAlmostEqual(math.hypot(x, y), 1)
         self.assertAlmostEqual(x, y)
+
+    def test_pad_state_starts_with_four_released_buttons(self):
+        first = PadState()
+        second = PadState()
+
+        self.assertEqual(first.buttons, [False, False, False, False])
+        first.buttons[0] = True
+        self.assertEqual(second.buttons, [False, False, False, False])
+
+    def test_vjoy_output_updates_all_four_buttons(self):
+        output = VJoyOutput.__new__(VJoyOutput)
+        output._device = Mock()
+        output._pyvjoy = SimpleNamespace(
+            HID_USAGE_X=1, HID_USAGE_Y=2, HID_USAGE_RX=3, HID_USAGE_RY=4
+        )
+
+        output.update(PadState(buttons=[True, False, True, False]))
+
+        self.assertEqual(
+            output._device.set_button.call_args_list,
+            [
+                unittest.mock.call(1, True),
+                unittest.mock.call(2, False),
+                unittest.mock.call(3, True),
+                unittest.mock.call(4, False),
+            ],
+        )
 
 
 if __name__ == "__main__":
