@@ -17,7 +17,9 @@ starts at HOLD, and selecting Disarmed also moves it to HOLD.
 
 The vertical **X** slider beside the mode switch is twice as long as the first
 switch. It starts at zero at the bottom; drag it upward to send progressively
-more right X-axis input, reaching full right at the top.
+more right X-axis input, reaching full right at the top. Unlike the centered
+stick axes, slider zero sends the minimum X-axis value (900 rather than 1500 in
+the target RC mapping).
 
 ## Which file do I run?
 
