@@ -74,18 +74,27 @@ class AppTests(unittest.TestCase):
 
     def test_x_slider_defaults_to_negative_one_and_maps_bottom_to_top(self):
         slider = self.app.x_slider_rect()
+        top, bottom, _ = self.app.x_slider_track()
         self.assertEqual(self.app.state.x, -1)
         self.assertEqual(self.app.x_slider_fraction(), 0)
 
-        self.assertTrue(self.app.set_x_slider_at(slider.midbottom))
+        self.assertTrue(self.app.set_x_slider_at((slider.centerx, bottom)))
         self.assertEqual(self.app.state.x, -1)
         self.assertEqual(self.app.x_slider_fraction(), 0)
         self.assertTrue(self.app.set_x_slider_at(slider.center))
         self.assertEqual(self.app.state.x, 0)
         self.assertEqual(self.app.x_slider_fraction(), 0.5)
-        self.assertTrue(self.app.set_x_slider_at(slider.midtop))
+        self.assertTrue(self.app.set_x_slider_at((slider.centerx, top)))
         self.assertEqual(self.app.state.x, 1)
         self.assertEqual(self.app.x_slider_fraction(), 1)
+
+    def test_x_slider_clamps_beyond_visible_stops(self):
+        slider = self.app.x_slider_rect()
+
+        self.app.move_x_slider(slider.midbottom)
+        self.assertEqual(self.app.state.x, -1)
+        self.app.move_x_slider(slider.midtop)
+        self.assertEqual(self.app.state.x, 1)
 
     def test_x_slider_displays_normalized_axis_value(self):
         original_render = self.app.small_font.render
