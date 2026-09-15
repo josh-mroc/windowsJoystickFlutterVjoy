@@ -15,6 +15,10 @@ switch selects between **ARMED** (button 1) and **Disarmed** (button 2). The sec
 selects **Auto** (button 3), **Manual** (button 4), or **HOLD** (button 5). It
 starts at HOLD, and selecting Disarmed also moves it to HOLD.
 
+The vertical **X** slider beside the mode switch is twice as long as the first
+switch. It starts at zero at the bottom; drag it upward to send progressively
+more right X-axis input, reaching full right at the top.
+
 ## Which file do I run?
 
 Run **`main.py`** from the repository's top-level folder. Do not run

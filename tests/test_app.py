@@ -57,6 +57,22 @@ class AppTests(unittest.TestCase):
 
         self.assertEqual(second.height, first.height * 4 // 3)
 
+    def test_x_slider_is_right_of_mode_switch_and_twice_first_switch_length(self):
+        first, mode = self.app.switch_rects()
+        slider = self.app.x_slider_rect()
+
+        self.assertGreater(slider.left, mode.right)
+        self.assertEqual(slider.height, first.height * 2)
+
+    def test_x_slider_defaults_to_zero_and_maps_bottom_to_top(self):
+        slider = self.app.x_slider_rect()
+        self.assertEqual(self.app.state.x, 0)
+
+        self.assertTrue(self.app.set_x_slider_at(slider.midbottom))
+        self.assertEqual(self.app.state.x, 0)
+        self.assertTrue(self.app.set_x_slider_at(slider.midtop))
+        self.assertEqual(self.app.state.x, 1)
+
     def test_second_switch_cannot_move_up_while_button_two_is_selected(self):
         switch = self.app.switch_rects()[1]
 
