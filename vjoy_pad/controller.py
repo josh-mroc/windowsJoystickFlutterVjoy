@@ -13,10 +13,11 @@ VJOY_CENTER = (VJOY_MIN + VJOY_MAX) // 2
 def stick_geometry(
     width: int, height: int
 ) -> tuple[tuple[float, float], tuple[float, float], float]:
-    """Return centers and radius for sticks that are one third of the screen wide."""
-    radius = max(1.0, min(width / 6, height * 0.30))
-    y = height * 0.57
-    return (width * 0.27, y), (width * 0.73, y), radius
+    """Return bottom-corner geometry sized from the shorter screen dimension."""
+    radius = max(1.0, min(width, height) * 0.33 / 2)
+    edge_margin = min(width, height) * 0.025
+    y = height - radius - edge_margin
+    return (radius + edge_margin, y), (width - radius - edge_margin, y), radius
 
 
 def clamp(value: float, low: float, high: float) -> float:
