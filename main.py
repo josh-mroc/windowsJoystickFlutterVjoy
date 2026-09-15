@@ -1,4 +1,4 @@
-from vjoy_pad.app import main
+from vjoy_pad.launcher import main
 
 
 if __name__ == "__main__":
