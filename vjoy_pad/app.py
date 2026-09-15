@@ -17,6 +17,18 @@ RING = (64, 79, 103)
 ACCENT = (66, 211, 173)
 TEXT = (235, 241, 248)
 MUTED = (148, 163, 184)
+RED = (239, 68, 68)
+GREEN = (34, 197, 94)
+ORANGE = (249, 115, 22)
+
+# Labels are ordered by their corresponding vJoy button number.
+SWITCH_LABELS = (
+    ("ARMED", RED),
+    ("Disarmed", MUTED),
+    ("Auto", GREEN),
+    ("Manual", ORANGE),
+    ("HOLD", MUTED),
+)
 
 
 class DualStickApp:
@@ -258,8 +270,10 @@ class DualStickApp:
                 )[selected]
             pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
             if index == 0:
-                top_label = self.small_font.render("1", True, TEXT)
-                bottom_label = self.small_font.render("2", True, TEXT)
+                top_text, top_color = SWITCH_LABELS[0]
+                bottom_text, bottom_color = SWITCH_LABELS[1]
+                top_label = self.small_font.render(top_text, True, top_color)
+                bottom_label = self.small_font.render(bottom_text, True, bottom_color)
                 self.screen.blit(
                     top_label,
                     top_label.get_rect(center=(rect.centerx, rect.top - 13)),
@@ -270,16 +284,16 @@ class DualStickApp:
                 )
             else:
                 label_x = rect.right + 14
-                for text, y in zip(
-                    ("3", "4", "5"),
+                for (text, color), y in zip(
+                    SWITCH_LABELS[2:],
                     (
                         inner.top + knob_radius + 4,
                         inner.centery,
                         inner.bottom - knob_radius - 4,
                     ),
                 ):
-                    label = self.small_font.render(text, True, TEXT)
-                    self.screen.blit(label, label.get_rect(center=(label_x, y)))
+                    label = self.small_font.render(text, True, color)
+                    self.screen.blit(label, label.get_rect(midleft=(label_x, y)))
 
     def draw_two_paddle_checkbox(self) -> None:
         rect = self.two_paddle_checkbox_rect()
@@ -310,7 +324,7 @@ class DualStickApp:
         )
         self.screen.blit(status, status.get_rect(center=(width / 2, 74)))
         hint = self.small_font.render(
-            "Switches select 1 / 2 and 3 / 4 / 5  •  Esc exits",
+            "Switches select arming and flight modes  •  Esc exits",
             True,
             MUTED,
         )

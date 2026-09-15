@@ -6,7 +6,7 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
 import pygame
 
-from vjoy_pad.app import DualStickApp
+from vjoy_pad.app import GREEN, MUTED, ORANGE, RED, SWITCH_LABELS, DualStickApp
 
 
 class AppTests(unittest.TestCase):
@@ -19,6 +19,18 @@ class AppTests(unittest.TestCase):
 
     def test_button_two_is_selected_by_default(self):
         self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
+
+    def test_switch_labels_describe_each_button_with_the_requested_color(self):
+        self.assertEqual(
+            SWITCH_LABELS,
+            (
+                ("ARMED", RED),
+                ("Disarmed", MUTED),
+                ("Auto", GREEN),
+                ("Manual", ORANGE),
+                ("HOLD", MUTED),
+            ),
+        )
 
     def test_first_switch_selects_button_one_or_two(self):
         switch = self.app.switch_rects()[0]

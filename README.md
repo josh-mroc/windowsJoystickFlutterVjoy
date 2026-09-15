@@ -9,9 +9,9 @@ unchecked, displaying RY as a horizontal control while continuing to send the
 same RY axis. Check it to restore the original vertical RY control.
 
 Two vertical selector switches at the top control vJoy buttons **1–5**. The first
-switch selects between buttons **1** and **2**: up turns button 1 on, while down
-turns button 2 on. The second selects button **3** at the top, **4** in the middle,
-or **5** at the bottom. It starts at 5, and selecting button 2 also moves it to 5.
+switch selects between **ARMED** (button 1) and **Disarmed** (button 2). The second
+selects **Auto** (button 3), **Manual** (button 4), or **HOLD** (button 5). It
+starts at HOLD, and selecting Disarmed also moves it to HOLD.
 
 ## Which file do I run?
 
