@@ -6,7 +6,9 @@ keyboard fallback are supported.
 
 The **Two Paddle input** checkbox controls the RY stick orientation. It starts
 unchecked, displaying RY as a horizontal control while continuing to send the
-same RY axis. Check it to restore the original vertical RY control.
+same RY axis. The horizontal control is the original vertical RY control rotated
+90 degrees to the right, so positive RY points left. Check the box to restore the
+original vertical RY control.
 
 Two vertical selector switches at the top control vJoy buttons **1–5**. The first
 switch selects between **ARMED** (button 1) and **Disarmed** (button 2). The second

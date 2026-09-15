@@ -97,13 +97,13 @@ class AppTests(unittest.TestCase):
         self.assertTrue(self.app.two_paddle_input)
         self.assertEqual(self.app.right_stick_half_sizes(), (half_width, half_height))
 
-    def test_horizontal_right_stick_tracks_horizontal_movement_on_ry(self):
+    def test_clockwise_rotated_right_stick_maps_right_to_negative_ry(self):
         _, right, _, half_height = self.app.geometry()
         self.app.claim("finger", right)
 
         self.app.move("finger", (right[0] + half_height, right[1] + 500))
 
-        self.assertEqual(self.app.state.right_y, 1)
+        self.assertEqual(self.app.state.right_y, -1)
 
     def test_vertical_right_stick_tracks_vertical_movement(self):
         self.app.toggle_two_paddle_at(self.app.two_paddle_checkbox_rect().center)
@@ -117,7 +117,7 @@ class AppTests(unittest.TestCase):
     def test_changing_orientation_releases_right_contact_and_centers_axis(self):
         _, right, _, half_height = self.app.geometry()
         self.app.claim("finger", (right[0] + half_height, right[1]))
-        self.assertEqual(self.app.state.right_y, 1)
+        self.assertEqual(self.app.state.right_y, -1)
 
         self.app.toggle_two_paddle_at(self.app.two_paddle_checkbox_rect().center)
 
