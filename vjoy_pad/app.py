@@ -190,8 +190,9 @@ class DualStickApp:
             if self.two_paddle_input:
                 self.state.right_y = stick_from_pointer(position, right, half_height)
             else:
-                # The visual control is rotated left; it still drives vJoy RY.
-                self.state.right_y = stick_from_pointer(
+                # Rotate the vertical RY control clockwise: its positive (bottom)
+                # end points left after the quarter turn.
+                self.state.right_y = -stick_from_pointer(
                     (position[1], position[0]), (right[1], right[0]), half_height
                 )
 
@@ -219,8 +220,8 @@ class DualStickApp:
                     keys[pygame.K_UP]
                 )
             else:
-                self.state.right_y = float(keys[pygame.K_RIGHT]) - float(
-                    keys[pygame.K_LEFT]
+                self.state.right_y = float(keys[pygame.K_LEFT]) - float(
+                    keys[pygame.K_RIGHT]
                 )
 
     def draw_stick(
@@ -233,7 +234,7 @@ class DualStickApp:
         pygame.draw.ellipse(self.screen, RING, inner, width=2)
         horizontal = half_width > half_height
         knob = (
-            (center[0] + y * half_width, center[1])
+            (center[0] - y * half_width, center[1])
             if horizontal
             else (center[0], center[1] + y * half_height)
         )
