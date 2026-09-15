@@ -33,6 +33,8 @@ class DualStickApp:
         self.font = pygame.font.SysFont("Segoe UI", 24)
         self.small_font = pygame.font.SysFont("Segoe UI", 17)
         self.state = PadState()
+        # The first switch is a two-position selector: down selects button 2.
+        self.state.buttons[1] = True
         self.contacts: dict[Hashable, str] = {}
         self.output = None
         self.status = "Preview mode"
@@ -81,24 +83,30 @@ class DualStickApp:
         return stick_geometry(width, height)
 
     def switch_rects(self) -> list[pygame.Rect]:
-        """Return four centered, touch-friendly vertical switch bounds."""
+        """Return three centered, touch-friendly vertical switch bounds."""
         width, height = self.screen.get_size()
         switch_width = max(42, min(58, width // 18))
         switch_height = max(76, min(96, height // 7))
         gap = max(16, switch_width // 2)
-        row_width = switch_width * 4 + gap * 3
+        row_width = switch_width * 3 + gap * 2
         left = (width - row_width) // 2
-        top = 122
+        top = 140
         return [
             pygame.Rect(left + index * (switch_width + gap), top, switch_width, switch_height)
-            for index in range(4)
+            for index in range(3)
         ]
 
     def toggle_switch_at(self, position: tuple[float, float]) -> bool:
         """Toggle the switch at position and report whether one was hit."""
         for index, rect in enumerate(self.switch_rects()):
             if rect.collidepoint(position):
-                self.state.buttons[index] = not self.state.buttons[index]
+                if index == 0:
+                    button_one = not self.state.buttons[0]
+                    self.state.buttons[0] = button_one
+                    self.state.buttons[1] = not button_one
+                else:
+                    button_index = index + 1
+                    self.state.buttons[button_index] = not self.state.buttons[button_index]
                 return True
         return False
 
@@ -155,9 +163,9 @@ class DualStickApp:
         )
 
     def draw_switches(self) -> None:
-        for index, (rect, enabled) in enumerate(
-            zip(self.switch_rects(), self.state.buttons), start=1
-        ):
+        for index, rect in enumerate(self.switch_rects()):
+            button_index = 0 if index == 0 else index + 1
+            enabled = self.state.buttons[button_index]
             pygame.draw.rect(self.screen, RING, rect, border_radius=rect.width // 2)
             inner = rect.inflate(-6, -6)
             pygame.draw.rect(
@@ -173,8 +181,22 @@ class DualStickApp:
                 else inner.bottom - knob_radius - 4
             )
             pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
-            label = self.small_font.render(str(index), True, TEXT)
-            self.screen.blit(label, label.get_rect(center=(rect.centerx, rect.bottom + 15)))
+            if index == 0:
+                top_label = self.small_font.render("1", True, TEXT)
+                bottom_label = self.small_font.render("2", True, TEXT)
+                self.screen.blit(
+                    top_label,
+                    top_label.get_rect(center=(rect.centerx, rect.top - 13)),
+                )
+                self.screen.blit(
+                    bottom_label,
+                    bottom_label.get_rect(center=(rect.centerx, rect.bottom + 15)),
+                )
+            else:
+                label = self.small_font.render(str(index + 2), True, TEXT)
+                self.screen.blit(
+                    label, label.get_rect(center=(rect.centerx, rect.bottom + 15))
+                )
 
     def draw(self) -> None:
         self.screen.fill(BG)
@@ -184,7 +206,7 @@ class DualStickApp:
         status = self.small_font.render(self.status, True, ACCENT if self.output else MUTED)
         self.screen.blit(status, status.get_rect(center=(width / 2, 74)))
         hint = self.small_font.render(
-            "Switch up = on, down = off  •  Touch or drag both sticks  •  Esc exits",
+            "1 / 2 selects one button  •  Other switches: up = on  •  Esc exits",
             True,
             MUTED,
         )
