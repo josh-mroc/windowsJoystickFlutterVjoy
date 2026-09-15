@@ -12,17 +12,19 @@ from vjoy_pad.controller import (
 
 
 class ControllerTests(unittest.TestCase):
-    def test_default_stick_diameter_is_one_third_of_screen_width(self):
+    def test_stick_diameter_is_33_percent_of_shorter_screen_dimension(self):
         left, right, radius = stick_geometry(1920, 1080)
 
-        self.assertEqual(radius * 2, 1920 / 3)
-        self.assertEqual(left, (1920 * 0.27, 1080 * 0.57))
-        self.assertEqual(right, (1920 * 0.73, 1080 * 0.57))
+        self.assertEqual(radius * 2, 1080 * 0.33)
+        self.assertEqual(
+            left, (radius + 1080 * 0.025, 1080 - radius - 1080 * 0.025)
+        )
+        self.assertEqual(right, (1920 - radius - 1080 * 0.025, left[1]))
 
-    def test_sticks_are_capped_to_fit_short_screens(self):
-        _, _, radius = stick_geometry(2000, 600)
+    def test_portrait_stick_size_uses_screen_width(self):
+        _, _, radius = stick_geometry(600, 1000)
 
-        self.assertEqual(radius, 600 * 0.30)
+        self.assertEqual(radius * 2, 600 * 0.33)
 
     def test_axis_endpoints_and_center(self):
         self.assertEqual(to_vjoy_axis(-1), VJOY_MIN)

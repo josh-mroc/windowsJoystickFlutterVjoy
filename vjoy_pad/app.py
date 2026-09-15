@@ -123,9 +123,13 @@ class DualStickApp:
         knob = (center[0] + x * radius, center[1] + y * radius)
         pygame.draw.circle(self.screen, ACCENT, knob, radius * 0.25)
         label = self.font.render(name, True, TEXT)
-        self.screen.blit(label, label.get_rect(center=(center[0], center[1] + radius + 38)))
+        self.screen.blit(
+            label, label.get_rect(center=(center[0], center[1] - radius - 48))
+        )
         values = self.small_font.render(f"X {x:+.2f}   Y {y:+.2f}", True, MUTED)
-        self.screen.blit(values, values.get_rect(center=(center[0], center[1] + radius + 68)))
+        self.screen.blit(
+            values, values.get_rect(center=(center[0], center[1] - radius - 22))
+        )
 
     def draw(self) -> None:
         self.screen.fill(BG)
@@ -134,11 +138,15 @@ class DualStickApp:
         self.screen.blit(title, title.get_rect(center=(width / 2, 40)))
         status = self.small_font.render(self.status, True, ACCENT if self.output else MUTED)
         self.screen.blit(status, status.get_rect(center=(width / 2, 74)))
+        hint = self.small_font.render(
+            "Touch or drag both sticks  •  Esc exits  •  WASD + arrow keys also work",
+            True,
+            MUTED,
+        )
+        self.screen.blit(hint, hint.get_rect(center=(width / 2, 105)))
         left, right, radius = self.geometry()
         self.draw_stick("LEFT  •  X / Y", left, radius, self.state.left_x, self.state.left_y)
         self.draw_stick("RIGHT  •  RX / RY", right, radius, self.state.right_x, self.state.right_y)
-        hint = self.small_font.render("Touch or drag both sticks  •  Esc exits  •  WASD + arrow keys also work", True, MUTED)
-        self.screen.blit(hint, hint.get_rect(center=(width / 2, self.screen.get_height() - 25)))
         pygame.display.flip()
 
     def run(self) -> None:
