@@ -332,7 +332,7 @@ class DualStickApp:
                     self.screen.blit(label, label.get_rect(midleft=(label_x, y)))
 
     def draw_x_slider(self) -> None:
-        """Draw X with zero at the bottom and full-right at the top."""
+        """Draw X with -1 at the bottom and +1 at the top."""
         rect = self.x_slider_rect()
         pygame.draw.rect(self.screen, RING, rect, border_radius=rect.width // 2)
         inner = rect.inflate(-6, -6)
@@ -344,7 +344,7 @@ class DualStickApp:
         )
         pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
         label = self.small_font.render("X", True, TEXT)
-        value_label = self.small_font.render(f"{value:.2f}", True, MUTED)
+        value_label = self.small_font.render(f"{self.state.x:.2f}", True, MUTED)
         self.screen.blit(label, label.get_rect(center=(rect.centerx, rect.top - 13)))
         self.screen.blit(
             value_label,
