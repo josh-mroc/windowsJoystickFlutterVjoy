@@ -4,6 +4,10 @@ A minimal, touch-friendly dual joystick for Windows 11. It sends the left stick 
 vJoy **Y** and the right stick to **RY**. Multi-touch, mouse dragging, and
 keyboard fallback are supported.
 
+The **Two Paddle input** checkbox controls the RY stick orientation. It starts
+unchecked, displaying RY as a horizontal control while continuing to send the
+same RY axis. Check it to restore the original vertical RY control.
+
 Two vertical selector switches at the top control vJoy buttons **1–5**. The first
 switch selects between buttons **1** and **2**: up turns button 1 on, while down
 turns button 2 on. The second selects button **3** at the top, **4** in the middle,
@@ -43,7 +47,8 @@ tracks that make their vertical-only movement clear. The sticks sit near the
 bottom-left and bottom-right corners for maximum separation. Use two fingers to
 move both sticks at once. Press
 **Esc** to exit. For desktop testing, drag a stick with the mouse; **W/S** moves
-the left stick and the up/down arrow keys move the right stick.
+the left stick. The left/right arrow keys move the horizontal RY stick; when
+**Two Paddle input** is checked, the up/down arrow keys move the vertical RY stick.
 
 Use another configured vJoy device or open a normal resizable window with:
 

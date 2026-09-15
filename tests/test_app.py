@@ -65,6 +65,48 @@ class AppTests(unittest.TestCase):
         self.assertFalse(self.app.toggle_switch_at((0, 0)))
         self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
 
+    def test_two_paddle_input_is_unchecked_and_ry_is_horizontal_by_default(self):
+        _, _, half_width, half_height = self.app.geometry()
+
+        self.assertFalse(self.app.two_paddle_input)
+        self.assertEqual(self.app.right_stick_half_sizes(), (half_height, half_width))
+
+    def test_two_paddle_checkbox_restores_vertical_ry_stick(self):
+        checkbox = self.app.two_paddle_checkbox_rect()
+
+        self.assertTrue(self.app.toggle_two_paddle_at(checkbox.center))
+
+        _, _, half_width, half_height = self.app.geometry()
+        self.assertTrue(self.app.two_paddle_input)
+        self.assertEqual(self.app.right_stick_half_sizes(), (half_width, half_height))
+
+    def test_horizontal_right_stick_tracks_horizontal_movement_on_ry(self):
+        _, right, _, half_height = self.app.geometry()
+        self.app.claim("finger", right)
+
+        self.app.move("finger", (right[0] + half_height, right[1] + 500))
+
+        self.assertEqual(self.app.state.right_y, 1)
+
+    def test_vertical_right_stick_tracks_vertical_movement(self):
+        self.app.toggle_two_paddle_at(self.app.two_paddle_checkbox_rect().center)
+        _, right, _, half_height = self.app.geometry()
+        self.app.claim("finger", right)
+
+        self.app.move("finger", (right[0] + 500, right[1] + half_height))
+
+        self.assertEqual(self.app.state.right_y, 1)
+
+    def test_changing_orientation_releases_right_contact_and_centers_axis(self):
+        _, right, _, half_height = self.app.geometry()
+        self.app.claim("finger", (right[0] + half_height, right[1]))
+        self.assertEqual(self.app.state.right_y, 1)
+
+        self.app.toggle_two_paddle_at(self.app.two_paddle_checkbox_rect().center)
+
+        self.assertEqual(self.app.state.right_y, 0)
+        self.assertNotIn("finger", self.app.contacts)
+
     def test_sticks_only_track_vertical_movement(self):
         left, _, _, half_height = self.app.geometry()
         self.app.claim("finger", left)
