@@ -54,8 +54,13 @@ class DualStickApp:
         self.status = "Preview mode"
         try:
             self.output = VJoyOutput(device_id)
+            # vJoy initializes its axes at center. Publish our initial state
+            # immediately so the unidirectional X slider appears at its
+            # minimum (far-left) position as soon as the device connects.
+            self.output.update(self.state)
             self.status = f"Connected to vJoy device {device_id}"
         except Exception as exc:
+            self.output = None
             self.status = f"Preview mode — vJoy unavailable: {exc}"
 
     def _enable_transparent_overlay(self) -> None:

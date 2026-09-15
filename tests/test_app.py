@@ -1,6 +1,6 @@
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
@@ -19,6 +19,14 @@ class AppTests(unittest.TestCase):
 
     def test_button_two_is_selected_by_default(self):
         self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
+
+    def test_initial_state_is_sent_as_soon_as_vjoy_connects(self):
+        output = Mock()
+        with patch("vjoy_pad.app.VJoyOutput", return_value=output):
+            app = DualStickApp(windowed=True)
+
+        output.update.assert_called_once_with(app.state)
+        self.assertEqual(app.state.x, 0)
 
     def test_switch_labels_describe_each_button_with_the_requested_color(self):
         self.assertEqual(
