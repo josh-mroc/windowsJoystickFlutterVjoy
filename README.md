@@ -1,7 +1,7 @@
 # vJoy Touchpad
 
 A minimal, touch-friendly dual joystick for Windows 11. It sends the left stick to
-vJoy **X/Y** and the right stick to **RX/RY**. Multi-touch, mouse dragging, and
+vJoy **Y** and the right stick to **RY**. Multi-touch, mouse dragging, and
 keyboard fallback are supported.
 
 Two vertical selector switches at the top control vJoy buttons **1–5**. The first
@@ -23,7 +23,7 @@ the required dependencies installed.
 
 ## Setup
 
-1. Install the vJoy driver and configure device **1** with X, Y, RX, and RY axes.
+1. Install the vJoy driver and configure device **1** with Y and RY axes.
 2. Install 64-bit Python 3.10 or newer.
 3. Open PowerShell in this folder and run:
 
@@ -38,12 +38,12 @@ the required dependencies installed.
    separate `pygame` package. Always install and run with the same Python
    interpreter.
 
-The app opens as a transparent, always-on-top overlay, with each joystick's width
-and height set to 33% of the screen's shorter dimension. The sticks sit near the
+The app opens as a transparent, always-on-top overlay, with tall, narrow joystick
+tracks that make their vertical-only movement clear. The sticks sit near the
 bottom-left and bottom-right corners for maximum separation. Use two fingers to
 move both sticks at once. Press
-**Esc** to exit. For desktop testing, drag a stick with the mouse; **WASD** moves
-the left stick and the arrow keys move the right stick.
+**Esc** to exit. For desktop testing, drag a stick with the mouse; **W/S** moves
+the left stick and the up/down arrow keys move the right stick.
 
 Use another configured vJoy device or open a normal resizable window with:
 
@@ -53,7 +53,7 @@ py main.py --device 2 --windowed
 
 If vJoy or `pyvjoy` cannot connect, the app stays open in preview mode and displays
 the error. Verify that the selected virtual device exists, is enabled, and exposes
-all four axes. Closing the app resets all axes to center.
+both axes. Closing the app resets both axes to center.
 
 ## Troubleshooting `No module named 'pygame'`
 
