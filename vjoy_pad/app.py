@@ -126,13 +126,21 @@ class DualStickApp:
             self.state.buttons[button_number - 1] = button_number == number
 
     def claim(self, contact: Hashable, position: tuple[float, float]) -> None:
-        left, right, radius = self.geometry()
+        left, right, half_width, half_height = self.geometry()
         distances = {
-            "left": pygame.Vector2(position).distance_to(left),
-            "right": pygame.Vector2(position).distance_to(right),
+            "left": (
+                ((position[0] - left[0]) / half_width) ** 2
+                + ((position[1] - left[1]) / half_height) ** 2
+            )
+            ** 0.5,
+            "right": (
+                ((position[0] - right[0]) / half_width) ** 2
+                + ((position[1] - right[1]) / half_height) ** 2
+            )
+            ** 0.5,
         }
         side = min(distances, key=distances.get)
-        if distances[side] <= radius * 1.35 and side not in self.contacts.values():
+        if distances[side] <= 1.35 and side not in self.contacts.values():
             self.contacts[contact] = side
             self.move(contact, position)
 
@@ -140,41 +148,44 @@ class DualStickApp:
         side = self.contacts.get(contact)
         if not side:
             return
-        left, right, radius = self.geometry()
-        x, y = stick_from_pointer(position, left if side == "left" else right, radius)
+        left, right, _, half_height = self.geometry()
+        y = stick_from_pointer(position, left if side == "left" else right, half_height)
         if side == "left":
-            self.state.left_x, self.state.left_y = x, y
+            self.state.left_y = y
         else:
-            self.state.right_x, self.state.right_y = x, y
+            self.state.right_y = y
 
     def release(self, contact: Hashable) -> None:
         side = self.contacts.pop(contact, None)
         if side == "left":
-            self.state.left_x = self.state.left_y = 0.0
+            self.state.left_y = 0.0
         elif side == "right":
-            self.state.right_x = self.state.right_y = 0.0
+            self.state.right_y = 0.0
 
     def keyboard(self) -> None:
         keys = pygame.key.get_pressed()
         if "left" not in self.contacts.values():
-            self.state.left_x = float(keys[pygame.K_d]) - float(keys[pygame.K_a])
             self.state.left_y = float(keys[pygame.K_s]) - float(keys[pygame.K_w])
         if "right" not in self.contacts.values():
-            self.state.right_x = float(keys[pygame.K_RIGHT]) - float(keys[pygame.K_LEFT])
             self.state.right_y = float(keys[pygame.K_DOWN]) - float(keys[pygame.K_UP])
 
-    def draw_stick(self, name: str, center, radius: float, x: float, y: float) -> None:
-        pygame.draw.circle(self.screen, RING, center, radius, width=4)
-        pygame.draw.circle(self.screen, RING, center, radius * 0.56, width=2)
-        knob = (center[0] + x * radius, center[1] + y * radius)
-        pygame.draw.circle(self.screen, ACCENT, knob, radius * 0.25)
+    def draw_stick(
+        self, name: str, center, half_width: float, half_height: float, y: float
+    ) -> None:
+        outer = pygame.Rect(0, 0, half_width * 2, half_height * 2)
+        outer.center = center
+        pygame.draw.ellipse(self.screen, RING, outer, width=4)
+        inner = outer.inflate(-half_width * 0.65, -half_height * 0.65)
+        pygame.draw.ellipse(self.screen, RING, inner, width=2)
+        knob = (center[0], center[1] + y * half_height)
+        pygame.draw.circle(self.screen, ACCENT, knob, half_width * 0.42)
         label = self.font.render(name, True, TEXT)
         self.screen.blit(
-            label, label.get_rect(center=(center[0], center[1] - radius - 48))
+            label, label.get_rect(center=(center[0], center[1] - half_height - 48))
         )
-        values = self.small_font.render(f"X {x:+.2f}   Y {y:+.2f}", True, MUTED)
+        values = self.small_font.render(f"{name} {y:+.2f}", True, MUTED)
         self.screen.blit(
-            values, values.get_rect(center=(center[0], center[1] - radius - 22))
+            values, values.get_rect(center=(center[0], center[1] - half_height - 22))
         )
 
     def draw_switches(self) -> None:
@@ -226,7 +237,9 @@ class DualStickApp:
         width, _ = self.screen.get_size()
         title = self.font.render("vJoy Touchpad", True, TEXT)
         self.screen.blit(title, title.get_rect(center=(width / 2, 40)))
-        status = self.small_font.render(self.status, True, ACCENT if self.output else MUTED)
+        status = self.small_font.render(
+            self.status, True, ACCENT if self.output else MUTED
+        )
         self.screen.blit(status, status.get_rect(center=(width / 2, 74)))
         hint = self.small_font.render(
             "Switches select 1 / 2 and 3 / 4 / 5  •  Esc exits",
@@ -235,26 +248,41 @@ class DualStickApp:
         )
         self.screen.blit(hint, hint.get_rect(center=(width / 2, 105)))
         self.draw_switches()
-        left, right, radius = self.geometry()
-        self.draw_stick("LEFT  •  X / Y", left, radius, self.state.left_x, self.state.left_y)
-        self.draw_stick("RIGHT  •  RX / RY", right, radius, self.state.right_x, self.state.right_y)
+        left, right, half_width, half_height = self.geometry()
+        self.draw_stick("Y", left, half_width, half_height, self.state.left_y)
+        self.draw_stick("RY", right, half_width, half_height, self.state.right_y)
         pygame.display.flip()
 
     def run(self) -> None:
         running = True
         while running:
             for event in pygame.event.get():
-                if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                if event.type == pygame.QUIT or (
+                    event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
+                ):
                     running = False
                 elif event.type == pygame.FINGERDOWN:
-                    position = (event.x * self.screen.get_width(), event.y * self.screen.get_height())
+                    position = (
+                        event.x * self.screen.get_width(),
+                        event.y * self.screen.get_height(),
+                    )
                     if not self.toggle_switch_at(position):
                         self.claim(("finger", event.finger_id), position)
                 elif event.type == pygame.FINGERMOTION:
-                    self.move(("finger", event.finger_id), (event.x * self.screen.get_width(), event.y * self.screen.get_height()))
+                    self.move(
+                        ("finger", event.finger_id),
+                        (
+                            event.x * self.screen.get_width(),
+                            event.y * self.screen.get_height(),
+                        ),
+                    )
                 elif event.type == pygame.FINGERUP:
                     self.release(("finger", event.finger_id))
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not getattr(event, "touch", False):
+                elif (
+                    event.type == pygame.MOUSEBUTTONDOWN
+                    and event.button == 1
+                    and not getattr(event, "touch", False)
+                ):
                     if not self.toggle_switch_at(event.pos):
                         self.claim("mouse", event.pos)
                 elif event.type == pygame.MOUSEMOTION and "mouse" in self.contacts:
@@ -275,9 +303,15 @@ class DualStickApp:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="A touch-friendly dual joystick for vJoy")
-    parser.add_argument("--device", type=int, default=1, help="vJoy device ID (default: 1)")
-    parser.add_argument("--windowed", action="store_true", help="open in a resizable window")
+    parser = argparse.ArgumentParser(
+        description="A touch-friendly dual joystick for vJoy"
+    )
+    parser.add_argument(
+        "--device", type=int, default=1, help="vJoy device ID (default: 1)"
+    )
+    parser.add_argument(
+        "--windowed", action="store_true", help="open in a resizable window"
+    )
     args = parser.parse_args()
     DualStickApp(args.device, args.windowed).run()
 

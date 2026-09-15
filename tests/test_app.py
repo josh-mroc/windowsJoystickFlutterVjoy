@@ -48,9 +48,7 @@ class AppTests(unittest.TestCase):
     def test_second_switch_cannot_move_up_while_button_two_is_selected(self):
         switch = self.app.switch_rects()[1]
 
-        self.assertTrue(
-            self.app.toggle_switch_at((switch.centerx, switch.top + 1))
-        )
+        self.assertTrue(self.app.toggle_switch_at((switch.centerx, switch.top + 1)))
 
         self.assertEqual(self.app.state.buttons[2:], [False, False, True])
 
@@ -66,6 +64,23 @@ class AppTests(unittest.TestCase):
     def test_position_outside_switches_is_not_consumed(self):
         self.assertFalse(self.app.toggle_switch_at((0, 0)))
         self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
+
+    def test_sticks_only_track_vertical_movement(self):
+        left, _, _, half_height = self.app.geometry()
+        self.app.claim("finger", left)
+
+        self.app.move("finger", (left[0] + 500, left[1] + half_height))
+
+        self.assertEqual(self.app.state.left_y, 1)
+
+    def test_release_centers_vertical_stick(self):
+        left, _, _, half_height = self.app.geometry()
+        self.app.claim("finger", (left[0], left[1] + half_height))
+        self.assertEqual(self.app.state.left_y, 1)
+
+        self.app.release("finger")
+
+        self.assertEqual(self.app.state.left_y, 0)
 
 
 if __name__ == "__main__":
