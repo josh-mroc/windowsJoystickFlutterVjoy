@@ -144,7 +144,15 @@ class DualStickApp:
     def move_x_slider(self, position: tuple[float, float]) -> None:
         """Update a claimed slider, clamping drags beyond either endpoint."""
         rect = self.x_slider_rect()
-        self.state.x = max(0.0, min(1.0, (rect.bottom - position[1]) / rect.height))
+        fraction = max(0.0, min(1.0, (rect.bottom - position[1]) / rect.height))
+        # vJoy axes are centered: -1 is the minimum, 0 is the midpoint, and
+        # +1 is the maximum.  Keeping that convention in PadState prevents a
+        # visual slider value of zero from accidentally being sent as center.
+        self.state.x = fraction * 2.0 - 1.0
+
+    def x_slider_fraction(self) -> float:
+        """Return X as the zero-to-one value displayed by the UI."""
+        return (self.state.x + 1.0) / 2.0
 
     def two_paddle_checkbox_rect(self) -> pygame.Rect:
         """Return the upper-left touch target for the orientation checkbox."""
@@ -330,14 +338,18 @@ class DualStickApp:
         inner = rect.inflate(-6, -6)
         pygame.draw.rect(self.screen, ACCENT, inner, border_radius=inner.width // 2)
         knob_radius = max(6, (inner.width - 4) // 2)
-        knob_y = round(inner.bottom - knob_radius - self.state.x * (
-            inner.height - knob_radius * 2
-        ))
+        value = self.x_slider_fraction()
+        knob_y = round(
+            inner.bottom - knob_radius - value * (inner.height - knob_radius * 2)
+        )
         pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
         label = self.small_font.render("X", True, TEXT)
-        value = self.small_font.render(f"{self.state.x:.2f}", True, MUTED)
+        value_label = self.small_font.render(f"{value:.2f}", True, MUTED)
         self.screen.blit(label, label.get_rect(center=(rect.centerx, rect.top - 13)))
-        self.screen.blit(value, value.get_rect(center=(rect.centerx, rect.bottom + 15)))
+        self.screen.blit(
+            value_label,
+            value_label.get_rect(center=(rect.centerx, rect.bottom + 15)),
+        )
 
     def draw_two_paddle_checkbox(self) -> None:
         rect = self.two_paddle_checkbox_rect()

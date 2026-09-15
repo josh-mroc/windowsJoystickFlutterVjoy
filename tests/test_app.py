@@ -26,7 +26,7 @@ class AppTests(unittest.TestCase):
             app = DualStickApp(windowed=True)
 
         output.update.assert_called_once_with(app.state)
-        self.assertEqual(app.state.x, 0)
+        self.assertEqual(app.state.x, -1)
 
     def test_switch_labels_describe_each_button_with_the_requested_color(self):
         self.assertEqual(
@@ -74,12 +74,18 @@ class AppTests(unittest.TestCase):
 
     def test_x_slider_defaults_to_zero_and_maps_bottom_to_top(self):
         slider = self.app.x_slider_rect()
-        self.assertEqual(self.app.state.x, 0)
+        self.assertEqual(self.app.state.x, -1)
+        self.assertEqual(self.app.x_slider_fraction(), 0)
 
         self.assertTrue(self.app.set_x_slider_at(slider.midbottom))
+        self.assertEqual(self.app.state.x, -1)
+        self.assertEqual(self.app.x_slider_fraction(), 0)
+        self.assertTrue(self.app.set_x_slider_at(slider.center))
         self.assertEqual(self.app.state.x, 0)
+        self.assertEqual(self.app.x_slider_fraction(), 0.5)
         self.assertTrue(self.app.set_x_slider_at(slider.midtop))
         self.assertEqual(self.app.state.x, 1)
+        self.assertEqual(self.app.x_slider_fraction(), 1)
 
     def test_second_switch_cannot_move_up_while_button_two_is_selected(self):
         switch = self.app.switch_rects()[1]
