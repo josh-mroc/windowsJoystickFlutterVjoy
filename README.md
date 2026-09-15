@@ -4,6 +4,18 @@ A minimal, touch-friendly dual joystick for Windows 11. It sends the left stick 
 vJoy **X/Y** and the right stick to **RX/RY**. Multi-touch, mouse dragging, and
 keyboard fallback are supported.
 
+## Which file do I run?
+
+Run **`main.py`** from the repository's top-level folder. Do not run
+`vjoy_pad/app.py` directly.
+
+```powershell
+py main.py
+```
+
+Complete the setup below first so that the same Python interpreter has all of
+the required dependencies installed.
+
 ## Setup
 
 1. Install the vJoy driver and configure device **1** with X, Y, RX, and RY axes.
