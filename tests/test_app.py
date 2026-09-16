@@ -72,68 +72,43 @@ class AppTests(unittest.TestCase):
         self.assertGreater(slider.left, mode.right)
         self.assertEqual(slider.height, first.height * 2)
 
-    def test_x_slider_center_is_at_bottom(self):
+    def test_x_slider_defaults_to_zero_and_is_limited_until_button_one_is_active(self):
         slider = self.app.x_slider_rect()
         top, bottom, _ = self.app.x_slider_track()
         self.assertEqual(self.app.state.x, 0)
-        self.assertEqual(self.app.x_slider_fraction(), 0)
+        self.assertEqual(self.app.x_slider_fraction(), 0.5)
 
-        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
-        mode = self.app.switch_rects()[1]
-        self.app.toggle_switch_at((mode.centerx, mode.top + 1))
         self.assertTrue(self.app.set_x_slider_at((slider.centerx, bottom)))
-        self.assertEqual(self.app.state.x, 0)
+        self.assertEqual(self.app.state.x, -1)
         self.assertEqual(self.app.x_slider_fraction(), 0)
         self.assertTrue(self.app.set_x_slider_at(slider.center))
-        self.assertEqual(self.app.state.x, 0.5)
+        self.assertEqual(self.app.state.x, 0)
         self.assertEqual(self.app.x_slider_fraction(), 0.5)
+        self.assertTrue(self.app.set_x_slider_at((slider.centerx, top)))
+        self.assertEqual(self.app.state.x, 0)
+        self.assertEqual(self.app.x_slider_fraction(), 0.5)
+
+        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
         self.assertTrue(self.app.set_x_slider_at((slider.centerx, top)))
         self.assertEqual(self.app.state.x, 1)
         self.assertEqual(self.app.x_slider_fraction(), 1)
 
-    def test_x_slider_requires_button_one_and_button_five_to_be_inactive(self):
-        slider = self.app.x_slider_rect()
-        mode = self.app.switch_rects()[1]
-
-        self.app.move_x_slider(slider.midtop)
-        self.assertEqual(self.app.state.x, 0)
-        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
-        self.app.move_x_slider(slider.midtop)
-        self.assertEqual(self.app.state.x, 0)
-        self.app.toggle_switch_at((mode.centerx, mode.centery))
-        self.app.move_x_slider(slider.midtop)
-        self.assertEqual(self.app.state.x, 1)
-
     def test_x_slider_clamps_beyond_visible_stops(self):
         slider = self.app.x_slider_rect()
 
-        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
-        mode = self.app.switch_rects()[1]
-        self.app.toggle_switch_at((mode.centerx, mode.top + 1))
         self.app.move_x_slider(slider.midbottom)
-        self.assertEqual(self.app.state.x, 0)
+        self.assertEqual(self.app.state.x, -1)
+        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
         self.app.move_x_slider(slider.midtop)
         self.assertEqual(self.app.state.x, 1)
 
     def test_disarming_clamps_positive_x_to_zero(self):
         first_switch = self.app.switch_rects()[0]
         self.app.toggle_switch_at(first_switch.center)
-        mode = self.app.switch_rects()[1]
-        self.app.toggle_switch_at((mode.centerx, mode.top + 1))
         self.app.move_x_slider(self.app.x_slider_rect().midtop)
         self.assertEqual(self.app.state.x, 1)
 
         self.app.toggle_switch_at(first_switch.center)
-
-        self.assertEqual(self.app.state.x, 0)
-
-    def test_selecting_button_five_centers_x(self):
-        first, mode = self.app.switch_rects()
-        self.app.toggle_switch_at(first.center)
-        self.app.toggle_switch_at((mode.centerx, mode.top + 1))
-        self.app.move_x_slider(self.app.x_slider_rect().midtop)
-
-        self.app.toggle_switch_at((mode.centerx, mode.bottom - 1))
 
         self.assertEqual(self.app.state.x, 0)
 

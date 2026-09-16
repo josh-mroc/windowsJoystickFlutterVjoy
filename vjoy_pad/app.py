@@ -132,7 +132,7 @@ class DualStickApp:
         return pygame.Rect(left, first.top, width, first.height * 2)
 
     def set_x_slider_at(self, position: tuple[float, float]) -> bool:
-        """Set the X axis when its enabled slider is touched."""
+        """Set the unidirectional X axis when the slider is touched."""
         rect = self.x_slider_rect()
         target = rect.inflate(24, 12)
         if not target.collidepoint(position):
@@ -141,23 +141,21 @@ class DualStickApp:
         return True
 
     def move_x_slider(self, position: tuple[float, float]) -> None:
-        """Update an enabled slider, clamping drags beyond either endpoint."""
-        if not self.x_slider_enabled():
-            return
+        """Update a claimed slider, clamping drags beyond either endpoint."""
         _, bottom, travel = self.x_slider_track()
-        # X is a one-way control: its centered value is at the bottom and its
-        # maximum is at the top. Measure against the knob's actual travel so
-        # dragging to either visible stop reaches the corresponding endpoint.
-        value = (bottom - position[1]) / travel
-        self.state.x = max(0.0, min(1.0, value))
-
-    def x_slider_enabled(self) -> bool:
-        """Return whether ARMED is selected and HOLD (button 5) is inactive."""
-        return self.state.buttons[0] and not self.state.buttons[4]
+        # Use the same normalized -1..+1 convention as the Y joystick.  The
+        # slider is inverted visually, so its bottom endpoint is -1 (the vJoy
+        # minimum) and its top endpoint is +1.  Measure against the knob's
+        # actual travel rather than the outer rectangle: otherwise dragging to
+        # the visible bottom stop could never produce the minimum axis value.
+        value = (bottom - position[1]) * 2.0 / travel - 1.0
+        # Positive X is only available while switch 1 (ARMED) is active.
+        upper_bound = 1.0 if self.state.buttons[0] else 0.0
+        self.state.x = max(-1.0, min(upper_bound, value))
 
     def x_slider_fraction(self) -> float:
         """Return X as the zero-to-one value displayed by the UI."""
-        return self.state.x
+        return (self.state.x + 1.0) / 2.0
 
     def x_slider_track(self) -> tuple[int, int, int]:
         """Return the top, bottom, and length of the knob-center track."""
@@ -200,8 +198,6 @@ class DualStickApp:
                         return True
                     third = min(2, int((position[1] - rect.top) * 3 / rect.height))
                     self._select_button(3 + third)
-                    if self.state.buttons[4]:
-                        self.state.x = 0.0
                 return True
         return False
 
@@ -348,7 +344,7 @@ class DualStickApp:
                     self.screen.blit(label, label.get_rect(midleft=(label_x, y)))
 
     def draw_x_slider(self) -> None:
-        """Draw X with its centered value at the bottom and +1 at the top."""
+        """Draw X with -1 at the bottom and +1 at the top."""
         rect = self.x_slider_rect()
         pygame.draw.rect(self.screen, RING, rect, border_radius=rect.width // 2)
         inner = rect.inflate(-6, -6)
