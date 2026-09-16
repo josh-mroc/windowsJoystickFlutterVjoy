@@ -200,9 +200,6 @@ class DualStickApp:
                     self.state.buttons[1] = not button_one
                     if not button_one:
                         self._select_button(5)
-                        # Disarming must immediately stop the blade rather
-                        # than merely preventing further power increases.
-                        self.state.x = -1.0
                 else:
                     if self.state.buttons[1]:
                         return True
@@ -215,6 +212,10 @@ class DualStickApp:
         """Select exactly one button on the three-position switch."""
         for button_number in range(3, 6):
             self.state.buttons[button_number - 1] = button_number == number
+        if number == 5:
+            # HOLD, like Disarmed (button 2), must immediately stop the blade
+            # rather than merely preventing further power increases.
+            self.state.x = -1.0
 
     def claim(self, contact: Hashable, position: tuple[float, float]) -> None:
         left, right, half_width, half_height = self.geometry()

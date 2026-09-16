@@ -23,7 +23,8 @@ always be moved downward toward OFF. The bottom position sends the minimum
 X-axis value (900 rather than the centered 1500 in the target RC mapping). That
 initial minimum is sent as soon as vJoy connects, so X shows at the far-left
 position rather than briefly remaining centered. Selecting **Disarmed** (button
-2) immediately returns Blade Power to the bottom **Blade OFF** position.
+2) or **HOLD** (button 5) immediately returns Blade Power to the bottom **Blade
+OFF** position.
 
 ## Which file do I run?
 
