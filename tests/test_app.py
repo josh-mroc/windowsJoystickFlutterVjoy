@@ -171,6 +171,21 @@ class AppTests(unittest.TestCase):
 
         self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
 
+    def test_selecting_button_two_returns_blade_power_to_off(self):
+        first, mode = self.app.switch_rects()
+        slider = self.app.x_slider_rect()
+        top, _, _ = self.app.x_slider_track()
+        self.app.toggle_switch_at(first.center)
+        self.app.toggle_switch_at((mode.centerx, mode.centery))
+        self.app.move_x_slider((slider.centerx, top))
+        self.assertEqual(self.app.state.x, 1)
+
+        self.app.toggle_switch_at(first.center)
+
+        self.assertTrue(self.app.state.buttons[1])
+        self.assertEqual(self.app.state.x, -1)
+        self.assertEqual(self.app.x_slider_fraction(), 0)
+
     def test_position_outside_switches_is_not_consumed(self):
         self.assertFalse(self.app.toggle_switch_at((0, 0)))
         self.assertEqual(self.app.state.buttons, [False, True, False, False, True])
