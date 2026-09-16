@@ -16,10 +16,9 @@ selects **Auto** (button 3), **Manual** (button 4), or **HOLD** (button 5). It
 starts at HOLD, and selecting Disarmed also moves it to HOLD.
 
 The vertical **X** slider beside the mode switch is twice as long as the first
-switch. It starts at **0** in the center and can move down to **-1**. Positive X
-values are locked out while Disarmed; selecting **ARMED** (button 1) unlocks the
-upper half of the slider through **+1**. Selecting Disarmed while X is positive
-returns X to zero.
+switch. Its centered **0** position is at the bottom, and it moves upward through
+**+1**. The slider moves only while **ARMED** (button 1) is selected and **HOLD**
+(button 5) is not selected. Selecting Disarmed or HOLD returns X to zero.
 
 ## Which file do I run?
 
