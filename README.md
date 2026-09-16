@@ -15,12 +15,14 @@ switch selects between **ARMED** (button 1) and **Disarmed** (button 2). The sec
 selects **Auto** (button 3), **Manual** (button 4), or **HOLD** (button 5). It
 starts at HOLD, and selecting Disarmed also moves it to HOLD.
 
-The vertical **X** slider beside the mode switch is twice as long as the first
-switch. It starts at **-1** at the bottom; drag it upward through zero to send
-progressively more right X-axis input, reaching **+1** at the top. The bottom
-position sends the minimum X-axis value (900 rather than the centered 1500 in
-the target RC mapping). That initial minimum is sent as soon as vJoy connects,
-so X shows at the far-left position rather than briefly remaining centered.
+The vertical **Blade Power** slider beside the mode switch is twice as long as
+the first switch. It starts at **Blade OFF** at the bottom, and its lower half
+(below zero) is grey. Blade power can only be moved upward when the first switch
+is **ARMED** (button 1) and the mode switch is not **HOLD** (button 5); it can
+always be moved downward toward OFF. The bottom position sends the minimum
+X-axis value (900 rather than the centered 1500 in the target RC mapping). That
+initial minimum is sent as soon as vJoy connects, so X shows at the far-left
+position rather than briefly remaining centered.
 
 ## Which file do I run?
 

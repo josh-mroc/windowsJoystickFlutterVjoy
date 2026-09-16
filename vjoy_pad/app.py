@@ -149,10 +149,17 @@ class DualStickApp:
         # minimum) and its top endpoint is +1.  Measure against the knob's
         # actual travel rather than the outer rectangle: otherwise dragging to
         # the visible bottom stop could never produce the minimum axis value.
-        self.state.x = max(
+        requested_x = max(
             -1.0,
             min(1.0, (bottom - position[1]) * 2.0 / travel - 1.0),
         )
+        # Blade power may only be increased while ARMED (button 1) and while
+        # the flight-mode selector is away from HOLD (button 5).  Reducing
+        # power remains available at all times so the operator can always
+        # return the blade to OFF.
+        can_increase = self.state.buttons[0] and not self.state.buttons[4]
+        if requested_x <= self.state.x or can_increase:
+            self.state.x = requested_x
 
     def x_slider_fraction(self) -> float:
         """Return X as the zero-to-one value displayed by the UI."""
@@ -344,18 +351,28 @@ class DualStickApp:
                     self.screen.blit(label, label.get_rect(midleft=(label_x, y)))
 
     def draw_x_slider(self) -> None:
-        """Draw X with -1 at the bottom and +1 at the top."""
+        """Draw blade power, with its below-zero half visually muted."""
         rect = self.x_slider_rect()
         pygame.draw.rect(self.screen, RING, rect, border_radius=rect.width // 2)
         inner = rect.inflate(-6, -6)
         pygame.draw.rect(self.screen, ACCENT, inner, border_radius=inner.width // 2)
+        lower_half = pygame.Rect(
+            inner.left, inner.centery, inner.width, inner.bottom - inner.centery
+        )
+        pygame.draw.rect(
+            self.screen,
+            MUTED,
+            lower_half,
+            border_bottom_left_radius=inner.width // 2,
+            border_bottom_right_radius=inner.width // 2,
+        )
         knob_radius = max(6, (inner.width - 4) // 2)
         value = self.x_slider_fraction()
         _, bottom, travel = self.x_slider_track()
         knob_y = round(bottom - value * travel)
         pygame.draw.circle(self.screen, TEXT, (inner.centerx, knob_y), knob_radius)
-        label = self.small_font.render("X", True, TEXT)
-        value_label = self.small_font.render(f"{self.state.x:.2f}", True, MUTED)
+        label = self.small_font.render("Blade Power", True, TEXT)
+        value_label = self.small_font.render("Blade OFF", True, MUTED)
         self.screen.blit(label, label.get_rect(center=(rect.centerx, rect.top - 13)))
         self.screen.blit(
             value_label,

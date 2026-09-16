@@ -6,7 +6,16 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
 import pygame
 
-from vjoy_pad.app import GREEN, MUTED, ORANGE, RED, SWITCH_LABELS, DualStickApp
+from vjoy_pad.app import (
+    ACCENT,
+    GREEN,
+    MUTED,
+    ORANGE,
+    RED,
+    SWITCH_LABELS,
+    TEXT,
+    DualStickApp,
+)
 
 
 class AppTests(unittest.TestCase):
@@ -78,6 +87,10 @@ class AppTests(unittest.TestCase):
         self.assertEqual(self.app.state.x, -1)
         self.assertEqual(self.app.x_slider_fraction(), 0)
 
+        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
+        mode = self.app.switch_rects()[1]
+        self.app.toggle_switch_at((mode.centerx, mode.centery))
+
         self.assertTrue(self.app.set_x_slider_at((slider.centerx, bottom)))
         self.assertEqual(self.app.state.x, -1)
         self.assertEqual(self.app.x_slider_fraction(), 0)
@@ -90,13 +103,16 @@ class AppTests(unittest.TestCase):
 
     def test_x_slider_clamps_beyond_visible_stops(self):
         slider = self.app.x_slider_rect()
+        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
+        mode = self.app.switch_rects()[1]
+        self.app.toggle_switch_at((mode.centerx, mode.centery))
 
         self.app.move_x_slider(slider.midbottom)
         self.assertEqual(self.app.state.x, -1)
         self.app.move_x_slider(slider.midtop)
         self.assertEqual(self.app.state.x, 1)
 
-    def test_x_slider_displays_normalized_axis_value(self):
+    def test_x_slider_uses_blade_labels(self):
         original_render = self.app.small_font.render
         font = Mock()
         font.render.side_effect = original_render
@@ -104,7 +120,40 @@ class AppTests(unittest.TestCase):
 
         self.app.draw_x_slider()
 
-        font.render.assert_any_call("-1.00", True, MUTED)
+        font.render.assert_any_call("Blade Power", True, TEXT)
+        font.render.assert_any_call("Blade OFF", True, MUTED)
+
+    def test_x_slider_cannot_move_up_unless_armed_and_not_on_hold(self):
+        slider = self.app.x_slider_rect()
+        top, bottom, _ = self.app.x_slider_track()
+
+        self.app.move_x_slider((slider.centerx, top))
+        self.assertEqual(self.app.state.x, -1)
+
+        self.app.toggle_switch_at(self.app.switch_rects()[0].center)
+        self.app.move_x_slider((slider.centerx, top))
+        self.assertEqual(self.app.state.x, -1)
+
+        mode = self.app.switch_rects()[1]
+        self.app.toggle_switch_at((mode.centerx, mode.centery))
+        self.app.move_x_slider((slider.centerx, top))
+        self.assertEqual(self.app.state.x, 1)
+
+        self.app.toggle_switch_at((mode.centerx, mode.bottom - 1))
+        self.app.move_x_slider((slider.centerx, bottom))
+        self.assertEqual(self.app.state.x, -1)
+
+    def test_x_slider_lower_half_is_grey(self):
+        rect = self.app.x_slider_rect().inflate(-6, -6)
+
+        self.app.draw_x_slider()
+
+        self.assertEqual(
+            self.app.screen.get_at((rect.centerx, rect.centery + 2))[:3], MUTED
+        )
+        self.assertEqual(
+            self.app.screen.get_at((rect.centerx, rect.top + 2))[:3], ACCENT
+        )
 
     def test_second_switch_cannot_move_up_while_button_two_is_selected(self):
         switch = self.app.switch_rects()[1]
