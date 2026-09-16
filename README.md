@@ -22,7 +22,8 @@ is **ARMED** (button 1) and the mode switch is not **HOLD** (button 5); it can
 always be moved downward toward OFF. The bottom position sends the minimum
 X-axis value (900 rather than the centered 1500 in the target RC mapping). That
 initial minimum is sent as soon as vJoy connects, so X shows at the far-left
-position rather than briefly remaining centered.
+position rather than briefly remaining centered. Selecting **Disarmed** (button
+2) immediately returns Blade Power to the bottom **Blade OFF** position.
 
 ## Which file do I run?
 

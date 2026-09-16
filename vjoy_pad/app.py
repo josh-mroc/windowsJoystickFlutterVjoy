@@ -200,6 +200,9 @@ class DualStickApp:
                     self.state.buttons[1] = not button_one
                     if not button_one:
                         self._select_button(5)
+                        # Disarming must immediately stop the blade rather
+                        # than merely preventing further power increases.
+                        self.state.x = -1.0
                 else:
                     if self.state.buttons[1]:
                         return True
